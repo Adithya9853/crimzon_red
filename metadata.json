@@ -1,0 +1,6 @@
+{
+  "name": "Crimson Studio — Developer Portfolio",
+  "description": "A dark futuristic developer portfolio featuring atmospheric crimson lighting, an HTML5 Canvas particle system, Lenis smooth scrolling, and GSAP ScrollTrigger choreography.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

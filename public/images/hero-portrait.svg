@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 780" fill="none">
+  <defs>
+    <radialGradient id="crimsonBackdrop" cx="52%" cy="44%" r="52%">
+      <stop offset="0%" stop-color="#ff2e63" stop-opacity="0.52"/>
+      <stop offset="45%" stop-color="#9f1239" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#050204" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rimLightRight" x1="1" y1="0.1" x2="0.2" y2="0.9">
+      <stop offset="0%" stop-color="#ff4d79"/>
+      <stop offset="55%" stop-color="#e11d48"/>
+      <stop offset="100%" stop-color="#4c0519" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="rimLightLeft" x1="0" y1="0.2" x2="0.8" y2="0.8">
+      <stop offset="0%" stop-color="#fb7185" stop-opacity="0.85"/>
+      <stop offset="60%" stop-color="#be123c" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#090205" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="suitGrad" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#1a0a10"/>
+      <stop offset="100%" stop-color="#070204"/>
+    </linearGradient>
+    <linearGradient id="skinTone" x1="0.3" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#3b1822"/>
+      <stop offset="45%" stop-color="#250d15"/>
+      <stop offset="100%" stop-color="#12050a"/>
+    </linearGradient>
+    <linearGradient id="shirtGrad" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#f8e7ec"/>
+      <stop offset="100%" stop-color="#a86d7d"/>
+    </linearGradient>
+    <linearGradient id="bottomFade" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#050204" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#050204" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Atmospheric Crimson Halo -->
+  <circle cx="330" cy="330" r="300" fill="url(#crimsonBackdrop)"/>
+
+  <!-- Subtle Geometric Orbit Rings -->
+  <circle cx="325" cy="310" r="225" stroke="#ff2e63" stroke-opacity="0.16" stroke-width="1" stroke-dasharray="6 8"/>
+  <circle cx="325" cy="310" r="265" stroke="#ff2e63" stroke-opacity="0.09" stroke-width="1"/>
+
+  <!-- Blazer Shoulders & Torso -->
+  <path d="M85 780 C95 605 142 520 225 495 L268 482 L372 482 L415 495 C498 520 545 605 555 780 Z" fill="url(#suitGrad)" stroke="url(#rimLightRight)" stroke-width="2.2"/>
+
+  <!-- Shirt V-Opening -->
+  <path d="M268 482 L320 675 L372 482 Z" fill="url(#shirtGrad)" fill-opacity="0.92"/>
+  <path d="M286 485 L320 580 L354 485" stroke="#4c0519" stroke-width="2" fill="none" opacity="0.45"/>
+
+  <!-- Blazer Lapels -->
+  <path d="M268 482 L222 552 L255 572 L238 615 L320 695 L280 510 Z" fill="#120509" stroke="#ff4d79" stroke-opacity="0.35" stroke-width="1.2"/>
+  <path d="M372 482 L418 552 L385 572 L402 615 L320 695 L360 510 Z" fill="#120509" stroke="#ff4d79" stroke-opacity="0.55" stroke-width="1.4"/>
+
+  <!-- Neck & Collar Shadow -->
+  <path d="M276 408 L270 492 Q320 520 370 492 L364 408 Z" fill="url(#skinTone)"/>
+  <path d="M276 430 Q320 460 364 430" stroke="#ff2e63" stroke-opacity="0.25" stroke-width="1.5" fill="none"/>
+
+  <!-- Head & Jawline -->
+  <path d="M242 268 C242 192 276 154 322 154 C368 154 402 192 402 268 C402 334 374 398 322 414 C270 398 242 334 242 268 Z" fill="url(#skinTone)" stroke="url(#rimLightRight)" stroke-width="2"/>
+
+  <!-- Ears -->
+  <path d="M242 268 C229 266 226 292 234 312 C238 321 245 320 248 314" fill="#210912" stroke="#fb7185" stroke-opacity="0.45" stroke-width="1.5"/>
+  <path d="M402 268 C415 266 418 292 410 312 C406 321 399 320 396 314" fill="#2b0d17" stroke="#ff2e63" stroke-opacity="0.7" stroke-width="1.8"/>
+
+  <!-- Textured Hair Silhouette -->
+  <path d="M236 276 C225 224 238 154 290 132 C322 118 370 124 396 154 C422 184 418 238 404 276 C400 240 392 208 366 196 C338 184 304 198 274 202 C252 206 244 236 236 276 Z" fill="#0d0307" stroke="#ff4d79" stroke-opacity="0.65" stroke-width="1.6"/>
+  <path d="M268 152 Q325 128 386 168" stroke="#fda4af" stroke-opacity="0.5" stroke-width="1.5" fill="none"/>
+
+  <!-- Subtle Facial Lighting Planes -->
+  <path d="M276 268 Q292 262 304 268" stroke="#fda4af" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round"/>
+  <path d="M342 268 Q356 262 370 268" stroke="#ff4d79" stroke-opacity="0.65" stroke-width="2" stroke-linecap="round"/>
+  <path d="M322 274 L326 322 L316 328" stroke="#ff4d79" stroke-opacity="0.4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M298 356 Q322 367 346 355" stroke="#fb7185" stroke-opacity="0.45" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+
+  <!-- Strong Studio Rim Highlight Along Right Shoulder & Face -->
+  <path d="M385 170 C406 198 408 258 398 310" stroke="#ff2e63" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <path d="M402 492 C486 518 532 595 546 730" stroke="#ff2e63" stroke-opacity="0.65" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M238 492 C154 518 108 595 94 730" stroke="url(#rimLightLeft)" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Seamless Bottom Vignette -->
+  <rect x="0" y="610" width="640" height="170" fill="url(#bottomFade)"/>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" fill="none">
+  <rect width="640" height="380" fill="#0d0408"/>
+  <radialGradient id="g1" cx="72%" cy="25%" r="60%"><stop offset="0%" stop-color="#e11d48" stop-opacity="0.35"/><stop offset="100%" stop-color="#0d0408" stop-opacity="0"/></radialGradient>
+  <rect width="640" height="380" fill="url(#g1)"/>
+  <rect x="28" y="28" width="584" height="324" rx="14" fill="#14060c" stroke="#ff3b62" stroke-opacity="0.28"/>
+  <path d="M28 70 H612" stroke="#ff3b62" stroke-opacity="0.16"/>
+  <circle cx="52" cy="49" r="5" fill="#e11d48"/><circle cx="70" cy="49" r="5" fill="#fb7185" fill-opacity="0.5"/><circle cx="88" cy="49" r="5" fill="#ffffff" fill-opacity="0.2"/>
+  <path d="M58 290 C120 260 155 180 215 198 C275 216 305 130 365 148 C425 166 470 95 570 112" stroke="#ff2e63" stroke-width="3" fill="none"/>
+  <path d="M58 290 C120 260 155 180 215 198 C275 216 305 130 365 148 C425 166 470 95 570 112 L570 310 L58 310 Z" fill="#e11d48" fill-opacity="0.14"/>
+  <rect x="56" y="96" width="142" height="58" rx="8" fill="#1e0810" stroke="#ff4d79" stroke-opacity="0.3"/>
+  <rect x="212" y="96" width="142" height="58" rx="8" fill="#1e0810" stroke="#ff4d79" stroke-opacity="0.2"/>
+</svg>

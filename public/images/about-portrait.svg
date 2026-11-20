@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 600" fill="none">
+  <defs>
+    <radialGradient id="aboutGlow" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#e11d48" stop-opacity="0.5"/>
+      <stop offset="55%" stop-color="#881337" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#080205" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bgCard" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#17060d"/>
+      <stop offset="100%" stop-color="#070204"/>
+    </linearGradient>
+    <linearGradient id="blazer" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#220b13"/>
+      <stop offset="100%" stop-color="#090306"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="600" fill="url(#bgCard)"/>
+  <circle cx="240" cy="230" r="220" fill="url(#aboutGlow)"/>
+  <path d="M0 120 H480 M0 240 H480 M0 360 H480 M0 480 H480" stroke="#ff2e63" stroke-opacity="0.06"/>
+  <path d="M120 0 V600 M240 0 V600 M360 0 V600" stroke="#ff2e63" stroke-opacity="0.06"/>
+
+  <!-- Portrait Silhouette -->
+  <path d="M72 600 C82 470 116 408 176 388 L208 378 L272 378 L304 388 C364 408 398 470 408 600 Z" fill="url(#blazer)" stroke="#ff2e63" stroke-opacity="0.6" stroke-width="2"/>
+  <path d="M208 378 L240 505 L272 378 Z" fill="#f5dce3" fill-opacity="0.88"/>
+  <path d="M214 322 L210 385 Q240 404 270 385 L266 322 Z" fill="#280e17"/>
+  <path d="M184 218 C184 162 208 134 240 134 C272 134 296 162 296 218 C296 268 276 314 240 326 C204 314 184 268 184 218 Z" fill="#280e17" stroke="#ff4d79" stroke-opacity="0.7" stroke-width="2"/>
+  <path d="M180 222 C172 184 182 132 220 118 C246 108 280 114 298 138 C316 162 312 198 300 222 C296 196 288 176 268 166 C248 158 222 168 202 172 C188 174 184 196 180 222 Z" fill="#0d0307" stroke="#fb7185" stroke-opacity="0.6" stroke-width="1.5"/>
+  <path d="M208 218 Q220 214 230 218" stroke="#fda4af" stroke-opacity="0.45" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M252 218 Q264 214 274 218" stroke="#ff4d79" stroke-opacity="0.65" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M224 282 Q240 290 256 282" stroke="#fb7185" stroke-opacity="0.5" stroke-width="1.6" stroke-linecap="round"/>
+
+  <!-- Bottom Gradient Mask -->
+  <linearGradient id="fadeBtm" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#070204" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#070204" stop-opacity="0.96"/>
+  </linearGradient>
+  <rect x="0" y="450" width="480" height="150" fill="url(#fadeBtm)"/>
+</svg>
