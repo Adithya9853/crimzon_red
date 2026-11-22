@@ -53,7 +53,9 @@ export default async function handler(req: ContactRequest, res: ContactResponse)
     });
     if (error) {
       console.error('Resend failed to send a portfolio inquiry:', error);
-      return res.status(502).json({ error: 'Could not send your inquiry. Please try again later.' });
+      return res.status(502).json({
+        error: error.message || 'Could not send your inquiry. Please try again later.',
+      });
     }
     return res.status(200).json({ ok: true });
   } catch (error) {
