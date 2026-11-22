@@ -17,10 +17,11 @@ export function ContactSection({
 }: ContactSectionProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [instagramHandle, setInstagramHandle] = useState('');
   const [details, setDetails] = useState('');
   const [copiedId, setCopiedId] = useState<'personal' | 'photo' | null>(null);
-  const [status, setStatus] = useState<'idle' | 'preparing' | 'ready' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -71,28 +72,41 @@ export function ContactSection({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!name.trim() || !instagramHandle.trim() || !details.trim()) {
+    if (!name.trim() || !email.trim() || !instagramHandle.trim() || !details.trim()) {
       setStatus('error');
-      setErrorMessage('Please enter your name, Instagram handle, and shoot or video details.');
+      setErrorMessage('Please complete all fields before sending your inquiry.');
       return;
     }
-
-    setStatus('preparing');
+    setStatus('sending');
     setErrorMessage('');
-
-    const formattedBrief = `Hi Preetham,\nName: ${name.trim()}\nInstagram: ${instagramHandle.trim()}\nDetails: ${details.trim()}`;
+    const formData = new FormData(e.currentTarget);
     try {
-      await navigator.clipboard.writeText(formattedBrief);
-    } catch {
-      // Clipboard optional if permission is restricted
-    }
-
-    window.setTimeout(() => {
-      setStatus('ready');
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          instagramHandle: instagramHandle.trim(),
+          details: details.trim(),
+          company: String(formData.get('company') || ''),
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Could not send your inquiry. Please try again in a moment.');
+      }
+      setStatus('sent');
       onClearService();
-    }, 350);
+    } catch (error) {
+      setStatus('error');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Could not send your inquiry. Please try again in a moment.'
+      );
+    }
   };
 
   const { contactSection } = portfolioData;
@@ -217,7 +231,8 @@ export function ContactSection({
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <input type="text" name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" />
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div>
                 <label
@@ -256,6 +271,25 @@ export function ContactSection({
 
             <div>
               <label
+                htmlFor="contact-email"
+                className="mb-2 block font-mono text-[11px] tracking-[0.2em] text-white/60 uppercase"
+              >
+                Your Email Address
+              </label>
+              <input
+                id="contact-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+                className="w-full rounded-lg border border-white/12 bg-[#070205]/90 px-4 py-3 text-sm text-white placeholder-white/30 transition-colors focus:border-[#f43f5e] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label
                 htmlFor="contact-details"
                 className="mb-2 block font-mono text-[11px] tracking-[0.2em] text-white/60 uppercase"
               >
@@ -277,13 +311,13 @@ export function ContactSection({
               </p>
             )}
 
-            {status === 'ready' && (
+            {status === 'sent' && (
               <div
                 role="status"
                 className="flex flex-col gap-3 rounded-lg border border-[#f43f5e]/40 bg-[#e11d48]/15 px-4 py-3.5 text-xs text-white sm:flex-row sm:items-center sm:justify-between"
               >
                 <span>
-                  Brief copied to clipboard. Send it directly via Instagram DM to complete your booking:
+                  Thanks! Your inquiry was sent by email. I will get back to you soon. You can also reach me on Instagram:
                 </span>
                 <div className="flex flex-wrap gap-2">
                   <a
@@ -311,14 +345,14 @@ export function ContactSection({
             <div className="flex justify-center pt-2">
               <button
                 type="submit"
-                disabled={status === 'preparing'}
+                disabled={status === 'sending'}
                 className="crimson-cta inline-flex min-h-[48px] cursor-pointer items-center gap-2.5 rounded-md px-8 py-3 text-xs font-bold tracking-[0.18em] text-white uppercase disabled:opacity-60"
               >
                 <Send className="h-4 w-4" />
                 <span>
-                  {status === 'preparing'
-                    ? 'Preparing DM Brief...'
-                    : 'Copy Brief for Instagram DM'}
+                  {status === 'sending'
+                    ? 'Sending inquiry...'
+                    : 'Send Email Inquiry'}
                 </span>
               </button>
             </div>

@@ -441,8 +441,8 @@ export const portfolioData: PortfolioConfig = {
   contactSection: {
     kicker: 'BOOKINGS & COLLABORATIONS',
     title: 'CONTACT.',
-    bookingChannel: 'Instagram DM',
-    bookingNote: 'Send a direct message on Instagram with your shoot or video editing details.',
+    bookingChannel: 'Email',
+    bookingNote: 'Send an email inquiry about a photography session or video editing project.',
     personalInstagram: {
       label: 'Personal Instagram',
       handle: '@itzpreethkmar',
