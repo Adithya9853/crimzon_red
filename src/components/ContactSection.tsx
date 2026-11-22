@@ -94,8 +94,15 @@ export function ContactSection({
           company: String(formData.get('company') || ''),
         }),
       });
+      const result = (await response.json().catch(() => null)) as
+        | { error?: unknown }
+        | null;
       if (!response.ok) {
-        throw new Error('Could not send your inquiry. Please try again in a moment.');
+        throw new Error(
+          typeof result?.error === 'string'
+            ? result.error
+            : 'Could not send your inquiry. Please try again in a moment.'
+        );
       }
       setStatus('sent');
       onClearService();
