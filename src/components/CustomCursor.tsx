@@ -72,6 +72,8 @@ export function CustomCursor() {
     let visible = false;
     let interactive = false;
     let clickShock = 0;
+    let lastPointerX: number | null = null;
+    let lastPointerY: number | null = null;
 
     const bolts: ElectricBolt[] = [];
     const trail: Array<{
@@ -113,7 +115,7 @@ export function CustomCursor() {
 
       for (let index = bolts.length - 1; index >= 0; index -= 1) {
         const bolt = bolts[index];
-        bolt.life *= 0.94;
+        bolt.life *= 0.92;
         if (bolt.life < 0.025) {
           bolts.splice(index, 1);
           continue;
@@ -166,13 +168,13 @@ export function CustomCursor() {
       }
 
       if (clickShock > 0.035) {
-        for (let wave = 0; wave < 3; wave += 1) {
-          const radius = 10 + (1 - clickShock) * 86 + wave * 15;
+        for (let wave = 0; wave < 2; wave += 1) {
+          const radius = 8 + (1 - clickShock) * 58 + wave * 12;
           context.beginPath();
           context.arc(mouseX, mouseY, radius, wave * 0.8, Math.PI * 2 - wave * 0.45);
           context.strokeStyle = wave === 0
             ? `rgba(255, 225, 232, ${clickShock * 0.92})`
-            : `rgba(255, 48, 78, ${clickShock * (0.72 - wave * 0.12)})`;
+            : `rgba(255, 48, 78, ${clickShock * (0.62 - wave * 0.1)})`;
           context.lineWidth = wave === 0 ? 2.1 : 1.4;
           context.shadowBlur = 22;
           context.shadowColor = 'rgba(255, 30, 58, 1)';
@@ -180,7 +182,7 @@ export function CustomCursor() {
         }
       }
 
-      clickShock *= 0.87;
+      clickShock *= 0.84;
       context.shadowBlur = 0;
 
       frameRef.current = window.requestAnimationFrame(render);
@@ -197,27 +199,29 @@ export function CustomCursor() {
         )
       );
 
-      const dx = mouseX - previousMouseX;
-      const dy = mouseY - previousMouseY;
+      const dx = lastPointerX === null ? 0 : mouseX - lastPointerX;
+      const dy = lastPointerY === null ? 0 : mouseY - lastPointerY;
       const distance = Math.hypot(dx, dy);
-      if (visible && distance > 3) {
-        bolts.unshift(createBolt(previousMouseX, previousMouseY, mouseX, mouseY, 0.9 + Math.min(1.2, distance * 0.035)));
-        if (distance > 12 && Math.random() > 0.42) {
+      if (lastPointerX !== null && distance > 3) {
+        bolts.unshift(createBolt(lastPointerX, lastPointerY!, mouseX, mouseY, 0.75 + Math.min(0.9, distance * 0.028)));
+        if (distance > 12 && Math.random() > 0.64) {
           const branchStart = 0.25 + Math.random() * 0.55;
-          const branchX = previousMouseX + dx * branchStart;
-          const branchY = previousMouseY + dy * branchStart;
-          const branchLength = 24 + Math.random() * Math.min(120, distance * 4 + 48);
-          const branchAngle = Math.atan2(dy, dx) + (Math.random() > 0.5 ? 1 : -1) * (0.55 + Math.random() * 0.95);
+          const branchX = lastPointerX + dx * branchStart;
+          const branchY = lastPointerY! + dy * branchStart;
+          const branchLength = 14 + Math.random() * Math.min(74, distance * 2.4 + 24);
+          const branchAngle = Math.atan2(dy, dx) + (Math.random() > 0.5 ? 1 : -1) * (0.6 + Math.random() * 0.8);
           bolts.unshift(createBolt(
             branchX,
             branchY,
             branchX + Math.cos(branchAngle) * branchLength,
             branchY + Math.sin(branchAngle) * branchLength,
-            0.55 + Math.random() * 0.65
+            0.45 + Math.random() * 0.45
           ));
         }
-        if (bolts.length > 70) bolts.length = 70;
+        if (bolts.length > 48) bolts.length = 48;
       }
+      lastPointerX = mouseX;
+      lastPointerY = mouseY;
 
       if (nextInteractive !== interactive) {
         interactive = nextInteractive;
@@ -243,15 +247,15 @@ export function CustomCursor() {
     const handlePointerDown = () => {
       ring.classList.add('cursor-ring-pressed');
       clickShock = 1;
-      for (let ray = 0; ray < 20; ray += 1) {
-        const angle = (ray / 20) * Math.PI * 2 + (Math.random() - 0.5) * 0.16;
-        const length = 22 + Math.random() * 70;
+      for (let ray = 0; ray < 14; ray += 1) {
+        const angle = (ray / 14) * Math.PI * 2 + (Math.random() - 0.5) * 0.16;
+        const length = 16 + Math.random() * 50;
         bolts.unshift(createBolt(
           mouseX + Math.cos(angle) * 7,
           mouseY + Math.sin(angle) * 7,
           mouseX + Math.cos(angle) * length,
           mouseY + Math.sin(angle) * length,
-          0.65 + Math.random() * 1.25
+          0.5 + Math.random() * 0.8
         ));
       }
     };

@@ -130,7 +130,7 @@ export function ParticleCanvas({ scrollVelocityRef }: ParticleCanvasProps) {
       const zoomTarget = normalizedScroll >= 0
         ? normalizedScroll * 0.9
         : normalizedScroll * 0.58;
-      scrollZoom += (zoomTarget - scrollZoom) * 0.09;
+      scrollZoom += (zoomTarget - scrollZoom) * 0.055;
       const centerX = width * 0.5;
       const centerY = height * 0.5;
       const radialSpread = 1 + scrollZoom * 0.46;

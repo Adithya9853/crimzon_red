@@ -253,8 +253,8 @@ export function ProjectsSection() {
           scrollTrigger: {
             trigger: grid,
             start: 'top 84%',
-            end: 'bottom 54%',
-            scrub: 0.8,
+            end: 'top 28%',
+            scrub: true,
             invalidateOnRefresh: true,
           },
         });
