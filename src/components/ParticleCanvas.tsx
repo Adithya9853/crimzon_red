@@ -116,6 +116,7 @@ export function ParticleCanvas({ scrollVelocityRef }: ParticleCanvasProps) {
 
     let rafId = 0;
     let time = 0;
+    let scrollZoom = 0;
 
     const renderFrame = () => {
       time += 0.016;
@@ -125,6 +126,14 @@ export function ParticleCanvas({ scrollVelocityRef }: ParticleCanvasProps) {
       const parallaxX = ((mouse.x - width * 0.5) / Math.max(width, 1)) * 28;
       const parallaxY = ((mouse.y - height * 0.5) / Math.max(height, 1)) * 20;
       const scrollVel = scrollVelocityRef ? scrollVelocityRef.current : 0;
+      const normalizedScroll = Math.tanh(scrollVel * 0.045);
+      const zoomTarget = normalizedScroll >= 0
+        ? normalizedScroll * 0.9
+        : normalizedScroll * 0.58;
+      scrollZoom += (zoomTarget - scrollZoom) * 0.09;
+      const centerX = width * 0.5;
+      const centerY = height * 0.5;
+      const radialSpread = 1 + scrollZoom * 0.46;
 
       ctx.clearRect(0, 0, width, height);
       ctx.globalCompositeOperation = 'lighter';
@@ -152,15 +161,30 @@ export function ParticleCanvas({ scrollVelocityRef }: ParticleCanvasProps) {
             (0.68 + 0.32 * Math.sin(time * p.pulseSpeed + p.pulsePhase));
         }
 
-        const drawX = p.x + parallaxX * p.depth;
-        const drawY = p.y + parallaxY * p.depth;
-        const size = p.radius * 2;
+        const drawX = centerX + (p.x - centerX) * radialSpread + parallaxX * p.depth;
+        const drawY = centerY + (p.y - centerY) * radialSpread + parallaxY * p.depth;
+        const perspectiveScale = Math.max(0.22, 1 + scrollZoom * (0.75 + p.depth * 1.25));
+        const drawRadius = p.radius * perspectiveScale;
+        const size = drawRadius * 2;
 
-        ctx.globalAlpha = Math.max(0.02, Math.min(1, p.alpha));
+        ctx.globalAlpha = Math.max(0.02, Math.min(1, p.alpha * (1 + Math.max(0, scrollZoom) * 0.55)));
+
+        if (scrollZoom > 0.28 && i % 4 === 0) {
+          const tailX = (drawX - centerX) * scrollZoom * 0.075;
+          const tailY = (drawY - centerY) * scrollZoom * 0.075;
+          ctx.beginPath();
+          ctx.moveTo(drawX - tailX, drawY - tailY);
+          ctx.lineTo(drawX, drawY);
+          ctx.strokeStyle = `rgba(255, 45, 76, ${scrollZoom * 0.28 * p.depth})`;
+          ctx.lineWidth = Math.max(0.7, p.radius * 0.12);
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = 'rgba(255, 30, 58, 0.8)';
+          ctx.stroke();
+        }
         ctx.drawImage(
           sprites[p.spriteIndex],
-          drawX - p.radius,
-          drawY - p.radius,
+          drawX - drawRadius,
+          drawY - drawRadius,
           size,
           size
         );
