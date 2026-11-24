@@ -252,8 +252,10 @@ export function ProjectsSection() {
         const sequence = gsap.timeline({
           scrollTrigger: {
             trigger: grid,
-            start: 'top 82%',
-            once: true,
+            start: 'top 84%',
+            end: 'bottom 54%',
+            scrub: 0.8,
+            invalidateOnRefresh: true,
           },
         });
 
@@ -262,7 +264,7 @@ export function ProjectsSection() {
           const cardX = cardRect.left - gridRect.left + cardRect.width / 2;
           const cardY = cardRect.top - gridRect.top + cardRect.height / 2;
           const startAngle = -Math.PI / 2 + (index / cards.length) * Math.PI * 2;
-          const orbit = { angle: startAngle };
+          const orbit = { angle: startAngle, reveal: 0 };
           const placeOnOrbit = () => {
             const angle = orbit.angle;
             const depthPhase = Math.sin(angle);
@@ -274,7 +276,7 @@ export function ProjectsSection() {
               rotationX: Math.sin(angle) * -12,
               rotationZ: Math.cos(angle) * 5,
               scale: 0.68 + (depthPhase + 1) * 0.12,
-              opacity: 0.58 + (depthPhase + 1) * 0.18,
+              opacity: orbit.reveal * (0.58 + (depthPhase + 1) * 0.18),
               filter: `blur(${(1 - (depthPhase + 1) / 2) * 3.5}px)`,
             });
           };
@@ -285,6 +287,16 @@ export function ProjectsSection() {
             {
               angle: startAngle + Math.PI * 2,
               duration: 1.35,
+              ease: 'none',
+              onUpdate: placeOnOrbit,
+            },
+            index * 0.12
+          );
+          sequence.to(
+            orbit,
+            {
+              reveal: 1,
+              duration: 0.48,
               ease: 'none',
               onUpdate: placeOnOrbit,
             },
