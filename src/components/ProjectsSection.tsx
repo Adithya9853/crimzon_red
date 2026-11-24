@@ -244,9 +244,11 @@ export function ProjectsSection() {
       const grid = projectGridRef.current;
       if (cards?.length && grid) {
         const gridRect = grid.getBoundingClientRect();
-        const gridCenterX = gridRect.width / 2;
-        const gridCenterY = gridRect.height / 2;
-        const orbitRadius = Math.min(gridRect.width * 0.28, 260);
+        const centerX = gridRect.width / 2;
+        const centerY = gridRect.height / 2;
+        const radiusX = Math.min(gridRect.width * 0.38, 390);
+        const radiusY = Math.min(gridRect.height * 0.2, 150);
+        const depth = Math.min(420, gridRect.width * 0.42);
         const sequence = gsap.timeline({
           scrollTrigger: {
             trigger: grid,
@@ -257,35 +259,58 @@ export function ProjectsSection() {
 
         cards.forEach((card, index) => {
           const cardRect = card.getBoundingClientRect();
-          const angle = (index / Math.max(1, cards.length)) * Math.PI * 2 - Math.PI / 2;
-          const cardCenterX = cardRect.left - gridRect.left + cardRect.width / 2;
-          const cardCenterY = cardRect.top - gridRect.top + cardRect.height / 2;
-          const orbitX = Math.cos(angle) * orbitRadius;
-          const orbitY = Math.sin(angle) * Math.min(orbitRadius * 0.58, 150);
-          const fromX = gridCenterX + orbitX - cardCenterX;
-          const fromY = gridCenterY + orbitY - cardCenterY;
+          const cardX = cardRect.left - gridRect.left + cardRect.width / 2;
+          const cardY = cardRect.top - gridRect.top + cardRect.height / 2;
+          const startAngle = -Math.PI / 2 + (index / cards.length) * Math.PI * 2;
+          const orbit = { angle: startAngle };
+          const placeOnOrbit = () => {
+            const angle = orbit.angle;
+            const depthPhase = Math.sin(angle);
+            gsap.set(card, {
+              x: centerX + Math.cos(angle) * radiusX - cardX,
+              y: centerY + Math.sin(angle) * radiusY - cardY,
+              z: depthPhase * depth,
+              rotationY: Math.cos(angle) * 58,
+              rotationX: Math.sin(angle) * -12,
+              rotationZ: Math.cos(angle) * 5,
+              scale: 0.68 + (depthPhase + 1) * 0.12,
+              opacity: 0.58 + (depthPhase + 1) * 0.18,
+              filter: `blur(${(1 - (depthPhase + 1) / 2) * 3.5}px)`,
+            });
+          };
 
-          sequence.fromTo(
-            card,
+          placeOnOrbit();
+          sequence.to(
+            orbit,
             {
-              x: fromX,
-              y: fromY,
-              rotation: index % 2 === 0 ? 300 : -300,
-              scale: 0.58,
-              opacity: 0,
-              filter: 'blur(10px)',
+              angle: startAngle + Math.PI * 2,
+              duration: 1.35,
+              ease: 'none',
+              onUpdate: placeOnOrbit,
             },
+            index * 0.12
+          );
+          sequence.to(
+            card,
+            { opacity: 1, filter: 'blur(0px)', duration: 0.2, ease: 'power1.out' },
+            index * 0.12
+          );
+          sequence.to(
+            card,
             {
               x: 0,
               y: 0,
-              rotation: 0,
+              z: 0,
+              rotationY: 0,
+              rotationX: 0,
+              rotationZ: 0,
               scale: 1,
               opacity: 1,
               filter: 'blur(0px)',
-              duration: 0.82,
-              ease: 'power3.out',
+              duration: 0.76,
+              ease: 'power3.inOut',
             },
-            index * 0.13
+            1.35 + index * 0.12
           );
 
           const mediaStage = card.querySelector<HTMLElement>('.project-media-reveal');
@@ -295,10 +320,10 @@ export function ProjectsSection() {
               { clipPath: 'inset(8% 0% 8% 0% round 14px)' },
               {
                 clipPath: 'inset(0% 0% 0% 0% round 14px)',
-                duration: 0.72,
+                duration: 0.68,
                 ease: 'power3.out',
               },
-              index * 0.13 + 0.18
+              1.52 + index * 0.12
             );
           }
         });
@@ -543,7 +568,7 @@ export function ProjectsSection() {
         {displayedItems.length > 0 ? (
           <div className="relative">
             <div className="red-halo" aria-hidden="true" />
-            <div ref={projectGridRef} className="grid-blur relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
+            <div ref={projectGridRef} className="project-orbit-stage grid-blur relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
               {displayedItems.map((project, idx) => {
                 const isVideo = project.mediaType === 'video';
                 const shouldPlayVideo =

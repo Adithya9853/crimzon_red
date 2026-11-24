@@ -77,23 +77,23 @@ export function ParticleCanvas({ scrollVelocityRef }: ParticleCanvasProps) {
 
     resize();
 
-    const targetCount = width < 768 ? 55 : 105;
+    const targetCount = width < 768 ? 72 : 155;
     const particles: Particle[] = [];
 
     for (let i = 0; i < targetCount; i++) {
       const isBokeh = i < targetCount * 0.28;
       const depth = 0.25 + Math.random() * 0.75;
       const baseAlpha = isBokeh
-        ? 0.08 + Math.random() * 0.18
-        : 0.28 + Math.random() * 0.55;
+        ? 0.13 + Math.random() * 0.22
+        : 0.34 + Math.random() * 0.56;
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
         vx: (Math.random() - 0.5) * 0.26 * depth,
         vy: -(0.12 + Math.random() * 0.36) * depth,
         radius: isBokeh
-          ? 16 + Math.random() * 34
-          : 2.2 + Math.random() * 5.2,
+          ? 19 + Math.random() * 38
+          : 2.4 + Math.random() * 5.8,
         alpha: baseAlpha,
         baseAlpha,
         pulseSpeed: 0.6 + Math.random() * 1.4,

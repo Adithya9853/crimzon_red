@@ -7,6 +7,7 @@ export function AtmosphericBackground() {
       />
       <div className="ambient" aria-hidden="true">
         <i className="o1" />
+        <i className="o2" />
         <i className="o3" />
       </div>
       <div

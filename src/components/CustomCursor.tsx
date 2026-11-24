@@ -72,17 +72,18 @@ export function CustomCursor() {
           life: interactive ? 1 : 0.72,
           size: 2.2 + speed * 0.16,
         });
-        if (trail.length > 42) trail.pop();
+        if (trail.length > 54) trail.pop();
       }
 
       previousMouseX = mouseX;
       previousMouseY = mouseY;
 
       context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      context.globalCompositeOperation = 'lighter';
 
       for (let index = 0; index < trail.length; index += 1) {
         const particle = trail[index];
-        particle.life *= 0.91;
+        particle.life *= 0.935;
         particle.x += (particle.x - mouseX) * 0.012;
         particle.y += (particle.y - mouseY) * 0.012;
 

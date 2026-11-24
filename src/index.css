@@ -87,8 +87,17 @@ body::after {
   height: 60vw;
   top: -6vh;
   left: -18vw;
-  background: radial-gradient(circle, #ff123857, #ff123800 68%);
+  background: radial-gradient(circle, #ff123878, #ff123800 68%);
   animation: 28s ease-in-out infinite orb-a;
+}
+
+.ambient .o2 {
+  width: 44vw;
+  height: 44vw;
+  top: 32vh;
+  right: -14vw;
+  background: radial-gradient(circle, #ff173866, #ff173800 70%);
+  animation: 24s ease-in-out infinite orb-b;
 }
 
 .ambient .o3 {
@@ -96,7 +105,7 @@ body::after {
   height: 52vw;
   bottom: -22vh;
   left: 22vw;
-  background: radial-gradient(circle, #e5091442, #e5091400 68%);
+  background: radial-gradient(circle, #e5091468, #e5091400 68%);
   animation: 31s ease-in-out infinite orb-c;
 }
 
@@ -108,6 +117,12 @@ body::after {
   50% {
     transform: translate(14vw, 18vh);
   }
+}
+
+@keyframes orb-b {
+  0%,
+  100% { transform: translate(0); }
+  50% { transform: translate(-12vw, 12vh); }
 }
 
 @keyframes orb-c {
@@ -520,6 +535,11 @@ html .glass.glass-panel-card:not(.glass-panel-dense):hover {
   filter: blur(18px);
   pointer-events: none;
   background: radial-gradient(closest-side, #000000b3, #0000);
+}
+
+.project-orbit-stage {
+  perspective: 1400px;
+  transform-style: preserve-3d;
 }
 
 /* Instagram Direct Card hover glow (adapted from reference whatsapp-card) */
