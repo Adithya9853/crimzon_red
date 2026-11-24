@@ -798,10 +798,87 @@ html .ig-direct-card:focus-visible .ig-direct-cta {
   background: #d81e2f;
 }
 
+/* Custom crimson cursor and living glass CTA finish */
+.cinematic-cursor-trail,
+.cinematic-cursor-ring,
+.cinematic-cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease, width 220ms ease, height 220ms ease, border-color 220ms ease, background-color 220ms ease;
+}
+
+.cinematic-cursor-trail { z-index: 1001; }
+.cinematic-cursor-ring {
+  z-index: 1002;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 108, 130, 0.72);
+  border-radius: 999px;
+  box-shadow: 0 0 18px rgba(244, 63, 94, 0.2), inset 0 0 12px rgba(244, 63, 94, 0.08);
+}
+.cinematic-cursor-dot {
+  z-index: 1003;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #fff3f5;
+  box-shadow: 0 0 12px 3px rgba(244, 63, 94, 0.8);
+}
+.cinematic-cursor-trail.cursor-visible,
+.cinematic-cursor-ring.cursor-visible,
+.cinematic-cursor-dot.cursor-visible { opacity: 1; }
+.cinematic-cursor-ring.cursor-ring-active {
+  width: 52px;
+  height: 52px;
+  border-color: rgba(255, 48, 78, 0.98);
+  background: rgba(216, 30, 47, 0.1);
+}
+.cinematic-cursor-ring.cursor-ring-pressed {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 48, 78, 0.25);
+}
+
+@media (pointer: fine) {
+  html.has-cinematic-cursor,
+  html.has-cinematic-cursor body,
+  html.has-cinematic-cursor button,
+  html.has-cinematic-cursor a { cursor: none !important; }
+}
+@media (pointer: coarse) {
+  .cinematic-cursor-trail, .cinematic-cursor-ring, .cinematic-cursor-dot { display: none; }
+}
+
+.glass-red {
+  isolation: isolate;
+  overflow: hidden;
+}
+.glass-red::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(112deg, transparent 14%, rgba(255, 221, 226, 0.46) 42%, rgba(255, 42, 69, 0.16) 50%, transparent 68%);
+  transform: translateX(-130%) skewX(-18deg);
+  animation: venom-sheen 5.2s cubic-bezier(0.2, 0.7, 0.2, 1) infinite;
+}
+.glass-red > * { position: relative; z-index: 1; }
+.glass-red:hover::before { animation-duration: 1.5s; }
+@keyframes venom-sheen {
+  0%, 48% { transform: translateX(-130%) skewX(-18deg); }
+  78%, 100% { transform: translateX(130%) skewX(-18deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto !important;
   }
+  .glass-red::before { animation: none !important; }
   *,
   ::before,
   ::after {

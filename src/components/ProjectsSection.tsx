@@ -122,6 +122,7 @@ export function ProjectsSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const headingRef = useRef<HTMLDivElement | null>(null);
   const stripTrackRef = useRef<HTMLDivElement | null>(null);
+  const projectGridRef = useRef<HTMLDivElement | null>(null);
   const videoCardsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
   const visibleVideoIdsRef = useRef<Set<string>>(new Set());
   const touchStartXRef = useRef<number | null>(null);
@@ -239,42 +240,69 @@ export function ProjectsSection() {
         );
       }
 
-      gsap.utils.toArray<HTMLElement>('.project-card-item').forEach((card) => {
-        gsap.fromTo(
-          card,
-          { opacity: 0, y: 40, scale: 0.96 },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.65,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: card,
-              start: 'top 90%',
-              once: true,
-            },
-          }
-        );
+      const cards = projectGridRef.current?.querySelectorAll<HTMLElement>('.project-card-item');
+      const grid = projectGridRef.current;
+      if (cards?.length && grid) {
+        const gridRect = grid.getBoundingClientRect();
+        const gridCenterX = gridRect.width / 2;
+        const gridCenterY = gridRect.height / 2;
+        const orbitRadius = Math.min(gridRect.width * 0.28, 260);
+        const sequence = gsap.timeline({
+          scrollTrigger: {
+            trigger: grid,
+            start: 'top 82%',
+            once: true,
+          },
+        });
 
-        const mediaStage = card.querySelector<HTMLElement>('.project-media-reveal');
-        if (mediaStage) {
-          gsap.fromTo(
-            mediaStage,
-            { clipPath: 'inset(8% 0% 8% 0% round 14px)' },
+        cards.forEach((card, index) => {
+          const cardRect = card.getBoundingClientRect();
+          const angle = (index / Math.max(1, cards.length)) * Math.PI * 2 - Math.PI / 2;
+          const cardCenterX = cardRect.left - gridRect.left + cardRect.width / 2;
+          const cardCenterY = cardRect.top - gridRect.top + cardRect.height / 2;
+          const orbitX = Math.cos(angle) * orbitRadius;
+          const orbitY = Math.sin(angle) * Math.min(orbitRadius * 0.58, 150);
+          const fromX = gridCenterX + orbitX - cardCenterX;
+          const fromY = gridCenterY + orbitY - cardCenterY;
+
+          sequence.fromTo(
+            card,
             {
-              clipPath: 'inset(0% 0% 0% 0% round 14px)',
-              duration: 0.8,
+              x: fromX,
+              y: fromY,
+              rotation: index % 2 === 0 ? 300 : -300,
+              scale: 0.58,
+              opacity: 0,
+              filter: 'blur(10px)',
+            },
+            {
+              x: 0,
+              y: 0,
+              rotation: 0,
+              scale: 1,
+              opacity: 1,
+              filter: 'blur(0px)',
+              duration: 0.82,
               ease: 'power3.out',
-              scrollTrigger: {
-                trigger: card,
-                start: 'top 88%',
-                once: true,
-              },
-            }
+            },
+            index * 0.13
           );
-        }
-      });
+
+          const mediaStage = card.querySelector<HTMLElement>('.project-media-reveal');
+          if (mediaStage) {
+            sequence.fromTo(
+              mediaStage,
+              { clipPath: 'inset(8% 0% 8% 0% round 14px)' },
+              {
+                clipPath: 'inset(0% 0% 0% 0% round 14px)',
+                duration: 0.72,
+                ease: 'power3.out',
+              },
+              index * 0.13 + 0.18
+            );
+          }
+        });
+      }
     }, sectionRef);
 
     return () => ctx.revert();
@@ -515,7 +543,7 @@ export function ProjectsSection() {
         {displayedItems.length > 0 ? (
           <div className="relative">
             <div className="red-halo" aria-hidden="true" />
-            <div className="grid-blur relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
+            <div ref={projectGridRef} className="grid-blur relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
               {displayedItems.map((project, idx) => {
                 const isVideo = project.mediaType === 'video';
                 const shouldPlayVideo =

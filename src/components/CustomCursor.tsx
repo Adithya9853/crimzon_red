@@ -20,6 +20,8 @@ export function CustomCursor() {
     const context = canvas.getContext('2d');
     if (!context) return;
 
+    document.documentElement.classList.add('has-cinematic-cursor');
+
     const resizeCanvas = () => {
       const ratio = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = window.innerWidth * ratio;
@@ -53,8 +55,8 @@ export function CustomCursor() {
       ringX += (mouseX - ringX) * 0.16;
       ringY += (mouseY - ringY) * 0.16;
 
-      dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
-      ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
+      dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
+      ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`;
 
       const movementX = mouseX - previousMouseX;
       const movementY = mouseY - previousMouseY;
@@ -144,6 +146,7 @@ export function CustomCursor() {
         visible = true;
         dot.classList.add('cursor-visible');
         ring.classList.add('cursor-visible');
+        canvas.classList.add('cursor-visible');
       }
     };
 
@@ -151,6 +154,7 @@ export function CustomCursor() {
       visible = false;
       dot.classList.remove('cursor-visible');
       ring.classList.remove('cursor-visible');
+      canvas.classList.remove('cursor-visible');
     };
 
     const handlePointerDown = () => {
@@ -174,6 +178,7 @@ export function CustomCursor() {
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointerup', handlePointerUp);
       window.removeEventListener('resize', resizeCanvas);
+      document.documentElement.classList.remove('has-cinematic-cursor');
       if (frameRef.current !== null) {
         window.cancelAnimationFrame(frameRef.current);
       }

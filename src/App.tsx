@@ -20,6 +20,7 @@ import { SkillsStackSection } from './components/SkillsStackSection';
 import { ContactSection } from './components/ContactSection';
 import { EndingSection } from './components/EndingSection';
 import { MusicToggle } from './components/MusicToggle';
+import { CustomCursor } from './components/CustomCursor';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -102,6 +103,7 @@ export default function App() {
 
   return (
     <div className="relative isolate flex min-h-screen flex-col bg-[#07070a] font-sans text-[#F3F4F6] selection:bg-[#A31515] selection:text-white">
+      <CustomCursor />
       {/* Opening Glitch Transition */}
       <IntroCurtain onComplete={handleIntroComplete} />
 
