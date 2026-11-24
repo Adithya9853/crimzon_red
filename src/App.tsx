@@ -28,6 +28,7 @@ export default function App() {
   const lenisRef = useRef<Lenis | null>(null);
   const scrollVelocityRef = useRef<number>(0);
   const [introDone, setIntroDone] = useState(false);
+  const [introRun, setIntroRun] = useState(0);
   const [selectedService, setSelectedService] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,6 +72,17 @@ export default function App() {
     }, 100);
   }, []);
 
+  const handleReplayIntro = useCallback(() => {
+    setIntroDone(false);
+    setIntroRun((run) => run + 1);
+    setSelectedService(null);
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { immediate: true });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, []);
+
   const handleNavigate = useCallback((sectionId: string) => {
     const targetEl = document.getElementById(sectionId);
     if (!targetEl) return;
@@ -105,7 +117,7 @@ export default function App() {
     <div className="relative isolate flex min-h-screen flex-col bg-[#07070a] font-sans text-[#F3F4F6] selection:bg-[#A31515] selection:text-white">
       <CustomCursor />
       {/* Opening Glitch Transition */}
-      <IntroCurtain onComplete={handleIntroComplete} />
+      <IntroCurtain key={introRun} onComplete={handleIntroComplete} />
 
       {/* Reference Ambient Crimson Orbs & Subtle Grid */}
       <AtmosphericBackground />
@@ -114,7 +126,7 @@ export default function App() {
       <ParticleCanvas scrollVelocityRef={scrollVelocityRef} />
 
       {/* Floating Liquid Glass Navigation */}
-      <Navbar onNavigate={handleNavigate} />
+      <Navbar onNavigate={handleNavigate} onReplayIntro={handleReplayIntro} />
 
       {/* Main Content Flow in Reference Section Order */}
       <main className="relative z-10 w-full flex-1">

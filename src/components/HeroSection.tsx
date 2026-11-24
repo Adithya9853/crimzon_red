@@ -28,7 +28,10 @@ export function HeroSection({ introDone, onNavigate }: HeroSectionProps) {
   }, []);
 
   useEffect(() => {
-    if (!introDone) return;
+    if (!introDone) {
+      setPortraitReady(false);
+      return;
+    }
 
     const prefersReduced = window.matchMedia(
       '(prefers-reduced-motion: reduce)'

@@ -4,6 +4,7 @@ import { portfolioData } from '../data/portfolioData';
 
 interface NavbarProps {
   onNavigate: (sectionId: string) => void;
+  onReplayIntro: () => void;
 }
 
 const NAV_LINKS = [
@@ -15,7 +16,7 @@ const NAV_LINKS = [
   { label: 'Contact', target: 'contact' },
 ];
 
-export function Navbar({ onNavigate }: NavbarProps) {
+export function Navbar({ onNavigate, onReplayIntro }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -61,7 +62,8 @@ export function Navbar({ onNavigate }: NavbarProps) {
           href="#hero"
           onClick={(e) => {
             e.preventDefault();
-            handleLinkClick('hero');
+            setMobileOpen(false);
+            onReplayIntro();
           }}
           className="group flex shrink-0 items-center text-xl font-black tracking-tight text-white uppercase whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#D81E2F] sm:text-2xl"
         >
