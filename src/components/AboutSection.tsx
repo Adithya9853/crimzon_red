@@ -1,71 +1,203 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Camera, Film, Instagram } from 'lucide-react';
 import { portfolioData } from '../data/portfolioData';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function AboutSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const cardRef = useRef<HTMLDivElement | null>(null);
-  const [tilt, setTilt] = useState({ rx: -4, ry: 8 });
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const copyRef = useRef<HTMLDivElement | null>(null);
+  const portraitWrapRef = useRef<HTMLDivElement | null>(null);
+  const toolsRef = useRef<HTMLDivElement | null>(null);
+
+  // Hanging pendulum physics refs
+  const rigRef = useRef<HTMLDivElement | null>(null);
+  const swingRef = useRef<HTMLDivElement | null>(null);
+  const shadowRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const prefersReduced = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    if (prefersReduced) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        '.about-reveal',
-        { opacity: 0, y: 26 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.7,
-          stagger: 0.08,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 80%',
-            once: true,
-          },
-        }
-      );
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top 76%',
+          once: true,
+        },
+      });
 
-      gsap.fromTo(
-        cardRef.current,
-        { opacity: 0, x: 40, rotateY: 16 },
-        {
-          opacity: 1,
-          x: 0,
-          rotateY: 0,
-          duration: 0.9,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 78%',
-            once: true,
+      tl.fromTo(
+        headingRef.current,
+        { y: 32, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.75, ease: 'power3.out' }
+      )
+        .fromTo(
+          copyRef.current,
+          { y: 28, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out' },
+          '-=0.45'
+        )
+        .fromTo(
+          portraitWrapRef.current,
+          { scale: 0.88, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.8, ease: 'back.out(1.2)' },
+          '-=0.55'
+        )
+        .fromTo(
+          toolsRef.current?.children || [],
+          { scale: 0.8, opacity: 0, y: 12 },
+          {
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            stagger: 0.05,
+            ease: 'back.out(1.4)',
           },
-        }
-      );
+          '-=0.5'
+        );
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width - 0.5;
-    const py = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ rx: -py * 14, ry: px * 16 });
-  };
+  // Interactive hanging pendulum physics matching reference .hang-rig
+  useEffect(() => {
+    const rig = rigRef.current;
+    const swing = swingRef.current;
+    const shadow = shadowRef.current;
+    if (!rig || !swing) return;
 
-  const handleMouseLeave = () => {
-    setTilt({ rx: -4, ry: 8 });
-  };
+    const prefersReduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    if (prefersReduced) return;
+
+    let rz = 0;
+    let rx = 0;
+    let ry = 0;
+    let vz = 0;
+    let vx = 0;
+    let vy = 0;
+
+    let targetZ = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let activePointerId: number | null = null;
+    let lastTime = performance.now();
+    let rafId = 0;
+
+    const tick = (now: number) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      const t = now / 1000;
+      const idleZ = dragging ? 0 : Math.sin(t * 1.15) * 1.4;
+      const idleY = dragging ? 0 : Math.cos(t * 0.9) * 2.2;
+
+      const stiffness = dragging ? 260 : 52;
+      const damping = dragging ? 22 : 5.4;
+
+      const az = (targetZ + idleZ - rz) * stiffness - vz * damping;
+      const ax = (targetX - rx) * stiffness - vx * damping;
+      const ay = (targetY + idleY - ry) * stiffness - vy * damping;
+
+      vz += az * dt;
+      vx += ax * dt;
+      vy += ay * dt;
+
+      rz += vz * dt;
+      rx += vx * dt;
+      ry += vy * dt;
+
+      swing.style.transform = `rotateZ(${rz.toFixed(2)}deg) rotateX(${rx.toFixed(
+        2
+      )}deg) rotateY(${ry.toFixed(2)}deg)`;
+
+      if (shadow) {
+        shadow.style.transform = `translate3d(${(-rz * 1.8).toFixed(
+          1
+        )}px, 0, 0) scale(${(1 + Math.abs(rx) * 0.005).toFixed(3)})`;
+      }
+
+      rafId = window.requestAnimationFrame(tick);
+    };
+
+    rafId = window.requestAnimationFrame(tick);
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (dragging && e.pointerId === activePointerId) {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        targetZ = Math.max(-18, Math.min(18, dx * 0.085));
+        targetY = Math.max(-16, Math.min(16, dx * 0.08));
+        targetX = Math.max(-12, Math.min(12, -dy * 0.06));
+        return;
+      }
+
+      if (e.pointerType !== 'mouse') return;
+      const rect = rig.getBoundingClientRect();
+      if (
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+      ) {
+        const nx = (e.clientX - rect.left) / rect.width - 0.5;
+        const ny = (e.clientY - rect.top) / rect.height - 0.5;
+        targetZ = nx * 4.5;
+        targetY = nx * 8;
+        targetX = -ny * 6;
+      } else {
+        targetZ = 0;
+        targetX = 0;
+        targetY = 0;
+      }
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      dragging = true;
+      activePointerId = e.pointerId;
+      startX = e.clientX;
+      startY = e.clientY;
+      swing.style.cursor = 'grabbing';
+      try {
+        swing.setPointerCapture(e.pointerId);
+      } catch {
+        // Ignore if capture unsupported
+      }
+    };
+
+    const endDrag = () => {
+      if (!dragging) return;
+      dragging = false;
+      activePointerId = null;
+      targetZ = 0;
+      targetX = 0;
+      targetY = 0;
+      swing.style.cursor = 'grab';
+    };
+
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    swing.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('pointermove', onPointerMove);
+      swing.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointerup', endDrag);
+      window.removeEventListener('pointercancel', endDrag);
+    };
+  }, []);
 
   const { aboutSection } = portfolioData;
 
@@ -73,128 +205,113 @@ export function AboutSection() {
     <section
       id="about"
       ref={sectionRef}
-      className="relative z-20 py-20 lg:py-28"
+      className="relative z-10 w-full overflow-hidden border-t border-white/5 py-24 text-gray-100"
     >
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
-        {/* Heading */}
-        <div className="mb-12">
-          <p className="about-reveal font-mono text-xs font-medium tracking-[0.26em] text-[#f43f5e] uppercase">
-            {aboutSection.kicker}
-          </p>
-          <h2 className="about-reveal mt-2 font-display text-4xl font-extrabold tracking-tight text-white uppercase sm:text-6xl">
-            {aboutSection.title.replace('.', '')}
-            <span className="text-[#f43f5e]">.</span>
-          </h2>
-        </div>
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-12 px-5 md:px-12 lg:grid-cols-12">
+        {/* Left Editorial Column */}
+        <div className="flex flex-col gap-8 lg:col-span-7">
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-bold tracking-[0.2em] text-[#A31515] uppercase md:text-base">
+              {aboutSection.kicker}
+            </span>
+            <h2
+              ref={headingRef}
+              className="text-5xl font-black tracking-tight text-white uppercase sm:text-6xl md:text-8xl"
+            >
+              {aboutSection.title}
+            </h2>
+            <div className="mt-2 h-1.5 w-24 rounded-full bg-[#A31515]" />
+          </div>
 
-        {/* Two-column Split */}
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-14">
-          {/* Left Bio & Info */}
-          <div className="lg:col-span-7">
-            <p className="about-reveal text-xl leading-relaxed font-medium text-white sm:text-2xl">
-              {aboutSection.leadParagraph}
-            </p>
-            <p className="about-reveal mt-4 text-sm leading-relaxed text-white/70 sm:text-base">
-              {aboutSection.secondaryParagraph}
-            </p>
-
-            {/* Core Tools Tiles */}
-            <div className="about-reveal mt-8">
-              <p className="mb-3 font-mono text-[11px] tracking-[0.22em] text-white/50 uppercase">
-                Tools I Use
-              </p>
-              <div className="flex flex-wrap gap-2.5">
-                {aboutSection.coreTools.map((tool) => (
-                  <span
-                    key={tool}
-                    className="rounded-md border border-[#ff3b62]/25 bg-[#16060d]/80 px-4 py-2 font-mono text-xs font-medium text-white/90 transition-colors hover:border-[#f43f5e]/70 hover:text-white"
-                  >
-                    {tool}
-                  </span>
-                ))}
+          <div className="relative">
+            <div className="red-halo" aria-hidden="true" />
+            <div className="glass glass-panel-card relative flex flex-col gap-6 rounded-3xl p-6 md:gap-8 md:p-12">
+              <div ref={copyRef} className="flex flex-col gap-4 md:gap-5">
+                <p className="text-base leading-relaxed font-medium text-gray-200 md:text-2xl">
+                  {aboutSection.leadParagraph}
+                </p>
+                <p className="text-base leading-relaxed text-gray-400 md:text-xl">
+                  {aboutSection.secondaryParagraph}
+                </p>
               </div>
-            </div>
 
-            {/* Photography, Video Editing & Booking Info */}
-            <div className="about-reveal mt-9 space-y-5 border-t border-white/10 pt-7">
-              <div className="flex items-start gap-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#ff3b62]/30 bg-[#e11d48]/15 text-[#fb7185]">
-                  <Camera className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-mono text-[11px] tracking-[0.2em] text-[#fb7185] uppercase">
-                    Photography Focus
-                  </p>
-                  <p className="mt-1 text-sm text-white/85">
-                    {aboutSection.photographyFocus.join(' · ')}
-                  </p>
+              <div>
+                <h3 className="mb-3 text-xs font-bold tracking-wider text-gray-500 uppercase md:mb-4 md:text-base">
+                  Editing Tools
+                </h3>
+                <div ref={toolsRef} className="flex flex-wrap gap-2.5 md:gap-3">
+                  {aboutSection.coreTools.map((tool) => (
+                    <span
+                      key={tool}
+                      className="glass-chip cursor-default rounded-full px-4 py-1.5 text-xs font-bold text-gray-200 md:px-5 md:py-2.5 md:text-base"
+                    >
+                      {tool}
+                    </span>
+                  ))}
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#ff3b62]/30 bg-[#e11d48]/15 text-[#fb7185]">
-                  <Film className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-mono text-[11px] tracking-[0.2em] text-[#fb7185] uppercase">
-                    Video Editing Focus
-                  </p>
-                  <p className="mt-1 text-sm text-white/85">
-                    {aboutSection.videoEditingFocus.join(' · ')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#ff3b62]/30 bg-[#e11d48]/15 text-[#fb7185]">
-                  <Instagram className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-mono text-[11px] tracking-[0.2em] text-[#fb7185] uppercase">
-                    Bookings
-                  </p>
-                  <p className="mt-1 text-sm text-white/80">
-                    {aboutSection.bookingNote}
-                  </p>
+              <div>
+                <h3 className="mb-3 text-xs font-bold tracking-wider text-gray-500 uppercase md:mb-4 md:text-base">
+                  Areas of Focus
+                </h3>
+                <div className="flex flex-wrap gap-2 md:gap-2.5">
+                  {aboutSection.focusAreas.map((area) => (
+                    <span
+                      key={area}
+                      className="rounded-full bg-[#A31515]/10 px-3.5 py-1.5 text-xs font-semibold text-red-300 ring-1 ring-red-500/30 md:px-4 md:py-2 md:text-sm"
+                    >
+                      {area}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right Tilted 3D Portrait Card */}
-          <div
-            ref={cardRef}
-            className="flex justify-center lg:col-span-5 lg:justify-end"
-            style={{ perspective: '1100px' }}
-          >
-            <div
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
-              className="luminous-card relative w-full max-w-[360px] overflow-hidden rounded-2xl p-3 transition-transform duration-300 ease-out"
-              style={{
-                transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-              }}
-            >
-              {/* Subtle Ambient Red Glow Behind Card Frame */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -top-12 -right-12 h-48 w-48 rounded-full bg-[#e11d48]/30 blur-3xl"
-              />
+        {/* Right Sticky Hanging Portrait Rig matching reference .hang-rig */}
+        <div className="relative flex justify-center lg:sticky lg:top-28 lg:col-span-5">
+          <div ref={portraitWrapRef} className="w-full flex justify-center">
+            <div ref={rigRef} className="hang-rig">
+              <span className="hang-nail" aria-hidden="true" />
+              <div ref={shadowRef} className="hang-shadow" aria-hidden="true" />
 
-              <div className="relative overflow-hidden rounded-xl border border-[#ff3b62]/25 bg-[#090205]">
-                <img
-                  src={aboutSection.portraitImage}
-                  alt={aboutSection.portraitAlt}
-                  referrerPolicy="no-referrer"
-                  className="aspect-[4/5] w-full object-cover object-center"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#050204] via-[#050204]/85 to-transparent p-5 pt-14">
-                  <p className="font-display text-lg font-extrabold tracking-wider text-white uppercase">
-                    {aboutSection.cardName}
-                  </p>
-                  <p className="mt-0.5 font-mono text-[11px] tracking-[0.2em] text-[#fb7185] uppercase">
-                    {aboutSection.cardRole}
-                  </p>
+              <div ref={swingRef} className="hang-swing">
+                <svg
+                  className="hang-strings"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <line x1="50" y1="0" x2="12" y2="100" />
+                  <line x1="50" y1="0" x2="88" y2="100" />
+                </svg>
+
+                <div className="hang-frame">
+                  <span className="hang-ring hang-ring-l" aria-hidden="true" />
+                  <span className="hang-ring hang-ring-r" aria-hidden="true" />
+
+                  <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-black/40 ring-1 ring-white/15">
+                    <img
+                      src={aboutSection.portraitImage}
+                      alt={aboutSection.portraitAlt}
+                      draggable={false}
+                      referrerPolicy="no-referrer"
+                      className="h-full w-full object-cover object-top transition-all duration-700 select-none"
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+                    <div className="hang-glare" aria-hidden="true" />
+
+                    <div className="absolute right-3 bottom-3 left-3 text-center">
+                      <span className="block text-base font-black tracking-wider text-white uppercase md:text-xl">
+                        {aboutSection.cardName}
+                      </span>
+                      <span className="text-xs font-bold tracking-widest text-red-400 uppercase md:text-sm">
+                        {aboutSection.cardRole}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

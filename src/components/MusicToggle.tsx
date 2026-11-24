@@ -72,17 +72,17 @@ export function MusicToggle() {
               : 'Play background music'
         }
         title={isPlaying ? 'Pause Music' : 'Play Music'}
-        className={`luminous-card group flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center gap-2.5 rounded-full px-3.5 py-2.5 text-xs font-mono tracking-[0.16em] uppercase transition-all focus-visible:outline-2 focus-visible:outline-[#ff2e63] sm:px-4 ${
+        className={`group flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center gap-2.5 rounded-full px-3.5 py-2 font-mono text-xs tracking-[0.14em] uppercase transition-all focus-visible:outline-2 focus-visible:outline-[#D81E2F] sm:px-4 ${
           isPlaying
-            ? 'border-[#f43f5e]/75 bg-[#1b0710]/90 text-white shadow-[0_0_24px_-4px_rgba(244,63,94,0.65)]'
-            : 'border-[#ff3b62]/30 bg-[#0d0408]/85 text-white/75 hover:border-[#f43f5e]/65 hover:text-white'
+            ? 'glass-red text-white'
+            : 'glass-chip text-gray-300 hover:text-white'
         }`}
       >
         <span
           className={`flex h-6 w-6 items-center justify-center rounded-full border transition-colors ${
             isPlaying
-              ? 'border-[#f43f5e]/70 bg-[#e11d48]/25 text-[#fda4af]'
-              : 'border-white/15 bg-white/5 text-white/70 group-hover:border-[#f43f5e]/50 group-hover:text-white'
+              ? 'border-white/30 bg-black/25 text-white'
+              : 'border-white/15 bg-white/5 text-gray-300 group-hover:border-[#D81E2F]/60 group-hover:text-white'
           }`}
         >
           {isPlaying ? (
@@ -94,13 +94,13 @@ export function MusicToggle() {
 
         {isPlaying && (
           <span aria-hidden="true" className="flex h-3 items-end gap-0.5">
-            <span className="h-2 w-0.5 animate-pulse rounded-full bg-[#fb7185]" />
-            <span className="h-3 w-0.5 animate-pulse rounded-full bg-[#f43f5e] [animation-delay:150ms]" />
-            <span className="h-1.5 w-0.5 animate-pulse rounded-full bg-[#fda4af] [animation-delay:300ms]" />
+            <span className="h-2 w-0.5 animate-pulse rounded-full bg-white" />
+            <span className="h-3 w-0.5 animate-pulse rounded-full bg-[#FF7887] [animation-delay:150ms]" />
+            <span className="h-1.5 w-0.5 animate-pulse rounded-full bg-white [animation-delay:300ms]" />
           </span>
         )}
 
-        <span className="hidden text-[11px] font-semibold sm:inline">
+        <span className="hidden text-[11px] font-bold sm:inline">
           {playbackError
             ? 'Audio Error'
             : isPlaying

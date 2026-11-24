@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { portfolioData } from '../data/portfolioData';
 
@@ -7,65 +7,102 @@ interface NavbarProps {
 }
 
 const NAV_LINKS = [
-  { label: 'WORK', target: 'projects' },
-  { label: 'ABOUT', target: 'about' },
-  { label: 'SERVICES', target: 'services' },
-  { label: 'TOOLS', target: 'skills' },
-  { label: 'CONTACT', target: 'contact' },
+  { label: 'Home', target: 'hero' },
+  { label: 'About', target: 'about' },
+  { label: 'Work', target: 'projects' },
+  { label: 'Services', target: 'services' },
+  { label: 'Skills', target: 'skills' },
+  { label: 'Contact', target: 'contact' },
 ];
 
 export function Navbar({ onNavigate }: NavbarProps) {
+  const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState('hero');
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 50);
+
+      const scrollPos = window.scrollY + 180;
+      let current = 'hero';
+      for (const link of NAV_LINKS) {
+        const el = document.getElementById(link.target);
+        if (el && el.offsetTop <= scrollPos) {
+          current = link.target;
+        }
+      }
+      setActiveSection(current);
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleLinkClick = (target: string) => {
     setMobileOpen(false);
+    setActiveSection(target);
     onNavigate(target);
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-40 border-b border-[#ff2e63]/15 bg-[#070205]/75 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-8 px-6 py-4 lg:px-10">
-        {/* Zone 1: Brand Mark */}
+    <nav
+      aria-label="Primary navigation"
+      className="fixed top-0 left-0 z-50 w-full px-3 pt-3 md:px-6"
+    >
+      <div
+        className={`glass mx-auto flex max-w-7xl items-center justify-between gap-6 rounded-2xl px-5 transition-all duration-300 md:px-8 ${
+          scrolled ? 'py-2.5 !bg-[#111113]/85' : 'py-3.5'
+        }`}
+      >
+        {/* Zone 1: Brand Mark matching reference A-SWIN lockup */}
         <a
           href="#hero"
           onClick={(e) => {
             e.preventDefault();
             handleLinkClick('hero');
           }}
-          className="flex shrink-0 items-center gap-3 whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#ff2e63]"
+          className="group flex shrink-0 items-center text-xl font-black tracking-tight text-white uppercase whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#D81E2F] sm:text-2xl"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-md border border-[#ff2e63]/60 bg-gradient-to-br from-[#e11d48] to-[#881337] font-display text-xs font-extrabold tracking-tight text-white shadow-[0_0_16px_rgba(225,29,72,0.5)]">
-            {portfolioData.brand.monogram}
+          <span className="text-[#D81E2F] drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">
+            {portfolioData.brand.firstLetter}
           </span>
-          <span className="font-display text-sm font-extrabold tracking-[0.18em] text-white uppercase sm:text-base">
-            {portfolioData.brand.name}
+          <span className="transition-colors duration-300 group-hover:text-[#FF7887]">
+            {portfolioData.brand.restName}
           </span>
         </a>
 
-        {/* Zone 2: Single-line Nav Links */}
-        <nav
-          aria-label="Primary navigation"
-          className="hidden items-center gap-7 md:flex"
-        >
-          {NAV_LINKS.map((link) => (
-            <button
-              key={link.target}
-              type="button"
-              onClick={() => handleLinkClick(link.target)}
-              className="group relative shrink-0 cursor-pointer py-1 text-xs font-semibold tracking-[0.18em] text-white/75 uppercase whitespace-nowrap transition-colors duration-200 hover:text-white focus-visible:outline-2 focus-visible:outline-[#ff2e63]"
-            >
-              {link.label}
-              <span className="absolute right-0 -bottom-0.5 left-0 h-[2px] origin-left scale-x-0 bg-[#f43f5e] transition-transform duration-200 group-hover:scale-x-100" />
-            </button>
-          ))}
-        </nav>
+        {/* Zone 2: Single-line Nav Links with active indicator & crimson hover underline */}
+        <div className="hidden items-center gap-6 md:flex lg:gap-8">
+          {NAV_LINKS.map((link) => {
+            const isActive = activeSection === link.target;
+            return (
+              <button
+                key={link.target}
+                type="button"
+                onClick={() => handleLinkClick(link.target)}
+                className={`group relative shrink-0 cursor-pointer py-1 text-xs font-bold tracking-[0.15em] uppercase whitespace-nowrap transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-[#D81E2F] md:text-[13px] ${
+                  isActive ? 'text-white' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                {link.label}
+                <span
+                  className={`absolute -bottom-1.5 left-0 h-[2px] bg-[#D81E2F] shadow-[0_0_8px_rgba(220,38,38,0.8)] transition-all duration-300 ease-out ${
+                    isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}
+                />
+              </button>
+            );
+          })}
+        </div>
 
-        {/* Zone 3: Single Primary Action */}
+        {/* Zone 3: Single Primary Action + Mobile Drawer Toggle */}
         <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
             onClick={() => handleLinkClick('contact')}
-            className="crimson-cta hidden shrink-0 cursor-pointer rounded-md px-5 py-2 text-xs font-bold tracking-[0.15em] text-white uppercase whitespace-nowrap sm:inline-flex"
+            className="glass-red hidden shrink-0 cursor-pointer rounded-full px-5 py-2 text-xs font-bold tracking-wider text-white uppercase whitespace-nowrap sm:inline-block"
           >
             {portfolioData.brand.ctaLabel}
           </button>
@@ -73,8 +110,9 @@ export function Navbar({ onNavigate }: NavbarProps) {
           <button
             type="button"
             aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((prev) => !prev)}
-            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-white/15 bg-white/5 text-white md:hidden"
+            className="glass-chip flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-white md:hidden"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -83,28 +121,36 @@ export function Navbar({ onNavigate }: NavbarProps) {
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="border-t border-[#ff2e63]/20 bg-[#090206]/95 px-6 py-5 backdrop-blur-xl md:hidden">
-          <div className="flex flex-col gap-3">
-            {NAV_LINKS.map((link) => (
-              <button
-                key={link.target}
-                type="button"
-                onClick={() => handleLinkClick(link.target)}
-                className="flex min-h-[44px] cursor-pointer items-center justify-between border-b border-white/5 text-left text-xs font-semibold tracking-[0.2em] text-white/85 uppercase transition-colors hover:text-[#fb7185]"
-              >
-                {link.label}
-              </button>
-            ))}
+        <div className="glass mx-auto mt-2 max-w-7xl rounded-2xl p-5 md:hidden">
+          <div className="flex flex-col gap-1">
+            {NAV_LINKS.map((link) => {
+              const isActive = activeSection === link.target;
+              return (
+                <button
+                  key={link.target}
+                  type="button"
+                  onClick={() => handleLinkClick(link.target)}
+                  className={`flex min-h-[44px] cursor-pointer items-center justify-between border-b border-white/5 px-2 text-left text-xs font-bold tracking-[0.18em] uppercase transition-colors ${
+                    isActive ? 'text-[#FF7887]' : 'text-gray-300 hover:text-white'
+                  }`}
+                >
+                  <span>{link.label}</span>
+                  {isActive && (
+                    <span className="h-1.5 w-6 rounded-full bg-[#D81E2F] shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
+                  )}
+                </button>
+              );
+            })}
             <button
               type="button"
               onClick={() => handleLinkClick('contact')}
-              className="crimson-cta mt-2 flex min-h-[44px] cursor-pointer items-center justify-center rounded-md text-xs font-bold tracking-[0.18em] text-white uppercase"
+              className="glass-red mt-3 flex min-h-[44px] cursor-pointer items-center justify-center rounded-full text-xs font-bold tracking-wider text-white uppercase"
             >
               {portfolioData.brand.ctaLabel}
             </button>
           </div>
         </div>
       )}
-    </header>
+    </nav>
   );
 }

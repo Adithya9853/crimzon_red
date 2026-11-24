@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Camera, Check, Copy, ExternalLink, Instagram, Send } from 'lucide-react';
+import {
+  ArrowRight,
+  Camera,
+  Check,
+  Copy,
+  ExternalLink,
+  Instagram,
+  Send,
+} from 'lucide-react';
 import { portfolioData } from '../data/portfolioData';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -16,8 +24,10 @@ export function ContactSection({
   onClearService,
 }: ContactSectionProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
+  const headingRef = useRef<HTMLDivElement | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [service, setService] = useState('');
   const [instagramHandle, setInstagramHandle] = useState('');
   const [details, setDetails] = useState('');
   const [copiedId, setCopiedId] = useState<'personal' | 'photo' | null>(null);
@@ -26,6 +36,7 @@ export function ContactSection({
 
   useEffect(() => {
     if (selectedService) {
+      setService(selectedService);
       setDetails((prev) =>
         prev.trim().length > 0
           ? prev
@@ -35,24 +46,37 @@ export function ContactSection({
   }, [selectedService]);
 
   useEffect(() => {
-    const prefersReduced = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    if (prefersReduced) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        '.contact-reveal',
-        { opacity: 0, y: 26 },
+        headingRef.current,
+        { y: 24, opacity: 0 },
         {
-          opacity: 1,
           y: 0,
-          duration: 0.7,
-          stagger: 0.1,
+          opacity: 1,
+          duration: 0.65,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: sectionRef.current,
             start: 'top 82%',
+            once: true,
+          },
+        }
+      );
+
+      gsap.fromTo(
+        '.contact-reveal',
+        { y: 26, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.65,
+          stagger: 0.1,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top 80%',
             once: true,
           },
         }
@@ -62,26 +86,38 @@ export function ContactSection({
     return () => ctx.revert();
   }, []);
 
-  const handleCopyHandle = async (handle: string, key: 'personal' | 'photo') => {
+  const handleCopyHandle = async (
+    e: React.MouseEvent,
+    handle: string,
+    key: 'personal' | 'photo'
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
       await navigator.clipboard.writeText(handle);
       setCopiedId(key);
       window.setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      // Fallback ignored if clipboard blocked
+      // Ignore if clipboard unavailable
     }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || !instagramHandle.trim() || !details.trim()) {
+    if (!name.trim() || !email.trim() || !details.trim()) {
       setStatus('error');
-      setErrorMessage('Please complete all fields before sending your inquiry.');
+      setErrorMessage('Please enter your name, email, and project details.');
       return;
     }
+
     setStatus('sending');
     setErrorMessage('');
+
     const formData = new FormData(e.currentTarget);
+    const composedDetails = service
+      ? `Service: ${service}\n\n${details.trim()}`
+      : details.trim();
+
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
@@ -90,13 +126,15 @@ export function ContactSection({
           name: name.trim(),
           email: email.trim(),
           instagramHandle: instagramHandle.trim(),
-          details: details.trim(),
+          details: composedDetails,
           company: String(formData.get('company') || ''),
         }),
       });
+
       const result = (await response.json().catch(() => null)) as
         | { error?: unknown }
         | null;
+
       if (!response.ok) {
         throw new Error(
           typeof result?.error === 'string'
@@ -104,7 +142,13 @@ export function ContactSection({
             : 'Could not send your inquiry. Please try again in a moment.'
         );
       }
+
       setStatus('sent');
+      setName('');
+      setEmail('');
+      setService('');
+      setInstagramHandle('');
+      setDetails('');
       onClearService();
     } catch (error) {
       setStatus('error');
@@ -116,254 +160,306 @@ export function ContactSection({
     }
   };
 
-  const { contactSection } = portfolioData;
+  const { contactSection, servicesSection } = portfolioData;
 
   return (
     <section
       id="contact"
       ref={sectionRef}
-      className="relative z-20 py-20 lg:py-28"
+      className="relative z-10 flex w-full flex-col items-center justify-center overflow-hidden border-t border-white/5 px-6 py-28 text-gray-100 md:px-16 lg:px-24"
     >
-      <div className="mx-auto max-w-4xl px-6 lg:px-10">
-        {/* Heading */}
-        <div className="mb-12 text-center">
-          <p className="contact-reveal font-mono text-xs font-medium tracking-[0.26em] text-[#f43f5e] uppercase">
-            {contactSection.kicker}
-          </p>
-          <h2 className="contact-reveal mt-2 font-display text-4xl font-extrabold tracking-tight text-white uppercase sm:text-6xl">
-            {contactSection.title.replace('.', '')}
-            <span className="text-[#f43f5e]">.</span>
-          </h2>
-        </div>
+      {/* Reference Heading */}
+      <div
+        ref={headingRef}
+        className="z-10 mb-14 flex flex-col items-center text-center"
+      >
+        <span className="mb-2 text-sm font-bold tracking-[0.2em] text-[#A31515] uppercase md:text-base">
+          {contactSection.kicker}
+        </span>
+        <h2 className="text-5xl font-black tracking-tight text-white uppercase md:text-7xl">
+          {contactSection.title}
+        </h2>
+        <div className="mt-3 h-1.5 w-20 rounded-full bg-[#A31515]" />
+      </div>
 
-        {/* Instagram Profile Cards Row */}
-        <div className="contact-reveal mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* Personal Instagram Card */}
-          <div className="luminous-card flex items-center justify-between gap-4 rounded-xl p-5">
-            <div className="flex min-w-0 items-center gap-3.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#ff3b62]/35 bg-[#e11d48]/15 text-[#fb7185]">
-                <Instagram className="h-4 w-4" />
+      <div className="relative z-10 w-full max-w-4xl">
+        {/* Direct Instagram DM Booking Cards (matching reference featured direct contact banner) */}
+        <div className="contact-reveal mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Personal Instagram DM Card */}
+          <a
+            href={contactSection.personalInstagram.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Message Preetham Kumar on Personal Instagram"
+            className="ig-direct-card glass glass-hover relative flex items-center justify-between gap-4 rounded-3xl px-6 py-5"
+          >
+            <div className="flex min-w-0 items-center gap-4">
+              <span className="ig-direct-icon grid h-12 w-12 shrink-0 place-items-center rounded-2xl">
+                <Instagram className="h-5 w-5" />
               </span>
               <div className="min-w-0">
-                <p className="font-mono text-[10px] tracking-[0.2em] text-white/50 uppercase">
-                  {contactSection.personalInstagram.label}
-                </p>
-                <a
-                  href={contactSection.personalInstagram.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 truncate text-sm font-semibold text-white transition-colors hover:text-[#fda4af]"
-                >
-                  <span>{contactSection.personalInstagram.handle}</span>
-                  <ExternalLink className="h-3.5 w-3.5 opacity-60" />
-                </a>
+                <span className="block text-[10px] font-bold tracking-[0.18em] text-gray-400 uppercase">
+                  Primary Booking · DM
+                </span>
+                <span className="block truncate text-base font-bold text-white">
+                  {contactSection.personalInstagram.handle}
+                </span>
+                <span className="ig-direct-cta mt-0.5 inline-flex items-center gap-1 text-xs font-bold">
+                  <span>Open Instagram DM</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </span>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={() =>
-                handleCopyHandle(contactSection.personalInstagram.handle, 'personal')
+              onClick={(e) =>
+                handleCopyHandle(
+                  e,
+                  contactSection.personalInstagram.handle,
+                  'personal'
+                )
               }
               aria-label="Copy personal Instagram handle"
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-white/15 bg-white/5 text-white/75 transition-colors hover:border-[#f43f5e] hover:text-white"
+              className="glass-chip flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl text-gray-300 hover:text-white"
             >
               {copiedId === 'personal' ? (
-                <Check className="h-4 w-4 text-[#fda4af]" />
+                <Check className="h-4 w-4 text-[#FF7887]" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}
             </button>
-          </div>
+          </a>
 
-          {/* Photography Instagram Card */}
-          <div className="luminous-card flex items-center justify-between gap-4 rounded-xl p-5">
-            <div className="flex min-w-0 items-center gap-3.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#ff3b62]/35 bg-[#e11d48]/15 text-[#fb7185]">
-                <Camera className="h-4 w-4" />
+          {/* Photography Instagram DM Card */}
+          <a
+            href={contactSection.photographyInstagram.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View Photography Instagram"
+            className="ig-direct-card glass glass-hover relative flex items-center justify-between gap-4 rounded-3xl px-6 py-5"
+          >
+            <div className="flex min-w-0 items-center gap-4">
+              <span className="ig-direct-icon grid h-12 w-12 shrink-0 place-items-center rounded-2xl">
+                <Camera className="h-5 w-5" />
               </span>
               <div className="min-w-0">
-                <p className="font-mono text-[10px] tracking-[0.2em] text-white/50 uppercase">
-                  {contactSection.photographyInstagram.label}
-                </p>
-                <a
-                  href={contactSection.photographyInstagram.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 truncate text-sm font-semibold text-white transition-colors hover:text-[#fda4af]"
-                >
-                  <span>{contactSection.photographyInstagram.handle}</span>
-                  <ExternalLink className="h-3.5 w-3.5 opacity-60" />
-                </a>
+                <span className="block text-[10px] font-bold tracking-[0.18em] text-gray-400 uppercase">
+                  Photography Feed
+                </span>
+                <span className="block truncate text-base font-bold text-white">
+                  {contactSection.photographyInstagram.handle}
+                </span>
+                <span className="ig-direct-cta mt-0.5 inline-flex items-center gap-1 text-xs font-bold">
+                  <span>Open Gallery Feed</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </span>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={() =>
-                handleCopyHandle(contactSection.photographyInstagram.handle, 'photo')
+              onClick={(e) =>
+                handleCopyHandle(
+                  e,
+                  contactSection.photographyInstagram.handle,
+                  'photo'
+                )
               }
               aria-label="Copy photography Instagram handle"
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-white/15 bg-white/5 text-white/75 transition-colors hover:border-[#f43f5e] hover:text-white"
+              className="glass-chip flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl text-gray-300 hover:text-white"
             >
               {copiedId === 'photo' ? (
-                <Check className="h-4 w-4 text-[#fda4af]" />
+                <Check className="h-4 w-4 text-[#FF7887]" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}
             </button>
-          </div>
+          </a>
         </div>
 
-        {/* Instagram DM Booking Brief Composer */}
-        <div className="contact-reveal luminous-card rounded-2xl p-6 sm:p-9">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 className="font-display text-lg font-bold tracking-wide text-white uppercase">
-                Book via {contactSection.bookingChannel}
-              </h3>
-              <p className="mt-1 text-xs text-white/55">
-                {contactSection.bookingNote}
-              </p>
-            </div>
-
-            {selectedService && (
-              <button
-                type="button"
-                onClick={onClearService}
-                className="cursor-pointer border border-[#f43f5e]/40 bg-[#e11d48]/15 px-3 py-1 font-mono text-[11px] text-[#fda4af] transition-colors hover:bg-[#e11d48]/25"
-              >
-                {selectedService} ×
-              </button>
-            )}
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <input type="text" name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" />
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        {/* Functional Contact Form inside Reference Glass Panel */}
+        <div className="contact-reveal relative">
+          <div className="red-halo" aria-hidden="true" />
+          <div className="glass glass-panel-card relative rounded-3xl p-6 md:p-10">
+            <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <label
-                  htmlFor="contact-name"
-                  className="mb-2 block font-mono text-[11px] tracking-[0.2em] text-white/60 uppercase"
-                >
-                  Your Name
-                </label>
-                <input
-                  id="contact-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  className="w-full rounded-lg border border-white/12 bg-[#070205]/90 px-4 py-3 text-sm text-white placeholder-white/30 transition-colors focus:border-[#f43f5e] focus:outline-none"
-                />
+                <h3 className="text-xl font-bold tracking-tight text-white uppercase md:text-2xl">
+                  Send a Project Brief
+                </h3>
+                <p className="mt-1 text-xs text-gray-400 md:text-sm">
+                  {contactSection.bookingNote}
+                </p>
               </div>
 
-              <div>
-                <label
-                  htmlFor="contact-instagram"
-                  className="mb-2 block font-mono text-[11px] tracking-[0.2em] text-white/60 uppercase"
+              {selectedService && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setService('');
+                    onClearService();
+                  }}
+                  className="glass-chip-red cursor-pointer rounded-full px-3.5 py-1 text-xs font-bold text-white"
                 >
-                  Your Instagram Handle
-                </label>
-                <input
-                  id="contact-instagram"
-                  type="text"
-                  value={instagramHandle}
-                  onChange={(e) => setInstagramHandle(e.target.value)}
-                  placeholder="@yourhandle"
-                  className="w-full rounded-lg border border-white/12 bg-[#070205]/90 px-4 py-3 text-sm text-white placeholder-white/30 transition-colors focus:border-[#f43f5e] focus:outline-none"
-                />
-              </div>
+                  {selectedService} ×
+                </button>
+              )}
             </div>
 
-            <div>
-              <label
-                htmlFor="contact-email"
-                className="mb-2 block font-mono text-[11px] tracking-[0.2em] text-white/60 uppercase"
-              >
-                Your Email Address
-              </label>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <input
-                id="contact-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
-                required
-                className="w-full rounded-lg border border-white/12 bg-[#070205]/90 px-4 py-3 text-sm text-white placeholder-white/30 transition-colors focus:border-[#f43f5e] focus:outline-none"
+                type="text"
+                name="company"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="absolute -left-[9999px]"
               />
-            </div>
 
-            <div>
-              <label
-                htmlFor="contact-details"
-                className="mb-2 block font-mono text-[11px] tracking-[0.2em] text-white/60 uppercase"
-              >
-                Shoot or Video Details
-              </label>
-              <textarea
-                id="contact-details"
-                rows={4}
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                placeholder="Tell me about your shoot or video edit — photography genre, reel/video style, and preferred timeline..."
-                className="w-full resize-none rounded-lg border border-white/12 bg-[#070205]/90 px-4 py-3 text-sm text-white placeholder-white/30 transition-colors focus:border-[#f43f5e] focus:outline-none"
-              />
-            </div>
-
-            {status === 'error' && errorMessage && (
-              <p role="alert" className="text-xs font-medium text-[#fda4af]">
-                {errorMessage}
-              </p>
-            )}
-
-            {status === 'sent' && (
-              <div
-                role="status"
-                className="flex flex-col gap-3 rounded-lg border border-[#f43f5e]/40 bg-[#e11d48]/15 px-4 py-3.5 text-xs text-white sm:flex-row sm:items-center sm:justify-between"
-              >
-                <span>
-                  Thanks! Your inquiry was sent by email. I will get back to you soon. You can also reach me on Instagram:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  <a
-                    href={contactSection.personalInstagram.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded border border-white/25 bg-black/40 px-3 py-1.5 font-mono text-[11px] font-semibold text-white transition-colors hover:border-[#f43f5e]"
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="contact-name"
+                    className="mb-2 block text-xs font-bold tracking-wider text-gray-400 uppercase"
                   >
-                    <span>{contactSection.personalInstagram.handle}</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                  <a
-                    href={contactSection.photographyInstagram.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded border border-white/25 bg-black/40 px-3 py-1.5 font-mono text-[11px] font-semibold text-white transition-colors hover:border-[#f43f5e]"
+                    Your Name
+                  </label>
+                  <input
+                    id="contact-name"
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="glass-input w-full rounded-2xl px-4 py-3.5 text-sm text-white placeholder-gray-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="contact-email"
+                    className="mb-2 block text-xs font-bold tracking-wider text-gray-400 uppercase"
                   >
-                    <span>{contactSection.photographyInstagram.handle}</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                    Email Address
+                  </label>
+                  <input
+                    id="contact-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="glass-input w-full rounded-2xl px-4 py-3.5 text-sm text-white placeholder-gray-500 focus:outline-none"
+                  />
                 </div>
               </div>
-            )}
 
-            <div className="flex justify-center pt-2">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="contact-service"
+                    className="mb-2 block text-xs font-bold tracking-wider text-gray-400 uppercase"
+                  >
+                    Service Selection
+                  </label>
+                  <select
+                    id="contact-service"
+                    value={service}
+                    onChange={(e) => setService(e.target.value)}
+                    className="glass-input w-full rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none"
+                  >
+                    <option value="" className="bg-[#101012] text-gray-300">
+                      Select a service (optional)
+                    </option>
+                    {servicesSection.items.map((item) => (
+                      <option
+                        key={item.id}
+                        value={item.title}
+                        className="bg-[#101012] text-white"
+                      >
+                        {item.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="contact-instagram"
+                    className="mb-2 block text-xs font-bold tracking-wider text-gray-400 uppercase"
+                  >
+                    Your Instagram Handle (Optional)
+                  </label>
+                  <input
+                    id="contact-instagram"
+                    type="text"
+                    value={instagramHandle}
+                    onChange={(e) => setInstagramHandle(e.target.value)}
+                    placeholder="@yourhandle"
+                    className="glass-input w-full rounded-2xl px-4 py-3.5 text-sm text-white placeholder-gray-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="contact-details"
+                  className="mb-2 block text-xs font-bold tracking-wider text-gray-400 uppercase"
+                >
+                  Message / Shoot Details
+                </label>
+                <textarea
+                  id="contact-details"
+                  rows={4}
+                  required
+                  value={details}
+                  onChange={(e) => setDetails(e.target.value)}
+                  placeholder="Tell me about your shoot or video edit — photography genre, reel/video style, location, and timeline..."
+                  className="glass-input w-full resize-none rounded-2xl px-4 py-3.5 text-sm text-white placeholder-gray-500 focus:outline-none"
+                />
+              </div>
+
+              {status === 'error' && errorMessage && (
+                <p role="alert" className="text-xs font-semibold text-[#FF7887]">
+                  {errorMessage}
+                </p>
+              )}
+
+              {status === 'sent' && (
+                <div
+                  role="status"
+                  className="flex flex-col gap-3 rounded-2xl border border-[#D81E2F]/40 bg-[#A31515]/15 px-4 py-4 text-xs text-white sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <span>
+                    Thanks! Your inquiry was sent. You can also DM me directly on Instagram:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href={contactSection.personalInstagram.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="glass-chip inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-mono text-[11px] font-bold text-white"
+                    >
+                      <span>{contactSection.personalInstagram.handle}</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="crimson-cta inline-flex min-h-[48px] cursor-pointer items-center gap-2.5 rounded-md px-8 py-3 text-xs font-bold tracking-[0.18em] text-white uppercase disabled:opacity-60"
+                className="glass-red mt-2 inline-flex min-h-[48px] cursor-pointer items-center justify-center gap-2.5 self-center rounded-full px-8 py-3 text-xs font-bold tracking-wider text-white uppercase disabled:opacity-60"
               >
                 <Send className="h-4 w-4" />
                 <span>
-                  {status === 'sending'
-                    ? 'Sending inquiry...'
-                    : 'Send Email Inquiry'}
+                  {status === 'sending' ? 'Sending...' : 'Send Message'}
                 </span>
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
     </section>

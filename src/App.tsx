@@ -20,7 +20,6 @@ import { SkillsStackSection } from './components/SkillsStackSection';
 import { ContactSection } from './components/ContactSection';
 import { EndingSection } from './components/EndingSection';
 import { MusicToggle } from './components/MusicToggle';
-import { CustomCursor } from './components/CustomCursor';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -64,13 +63,20 @@ export default function App() {
     };
   }, []);
 
+  const handleIntroComplete = useCallback(() => {
+    setIntroDone(true);
+    window.setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 100);
+  }, []);
+
   const handleNavigate = useCallback((sectionId: string) => {
     const targetEl = document.getElementById(sectionId);
     if (!targetEl) return;
 
     if (lenisRef.current) {
       lenisRef.current.scrollTo(targetEl, {
-        offset: -68,
+        offset: -76,
         duration: 1.15,
       });
     } else {
@@ -95,52 +101,50 @@ export default function App() {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-[#050204] text-[#f5eff2]">
-      <CustomCursor />
+    <div className="relative isolate flex min-h-screen flex-col bg-[#07070a] font-sans text-[#F3F4F6] selection:bg-[#A31515] selection:text-white">
+      {/* Opening Glitch Transition */}
+      <IntroCurtain onComplete={handleIntroComplete} />
 
-      {/* Opening Cinematic Transition */}
-      <IntroCurtain onComplete={() => setIntroDone(true)} />
-
-      {/* Dynamic Burgundy / Crimson / Magenta Atmospheric Lighting */}
+      {/* Reference Ambient Crimson Orbs & Subtle Grid */}
       <AtmosphericBackground />
 
-      {/* Interactive HTML5 Canvas Particle Field */}
+      {/* Subtle Interactive Particle Depth Field */}
       <ParticleCanvas scrollVelocityRef={scrollVelocityRef} />
 
-      {/* Sticky Top Navigation */}
+      {/* Floating Liquid Glass Navigation */}
       <Navbar onNavigate={handleNavigate} />
 
       {/* Main Content Flow in Reference Section Order */}
-      <main>
-        {/* 1. Hero Section */}
+      <main className="relative z-10 w-full flex-1">
+        {/* 1. Framed Hero Section */}
         <HeroSection introDone={introDone} onNavigate={handleNavigate} />
 
-        {/* Career Metrics Strip */}
+        {/* 2. Unified Stat Panel */}
         <MetricsBar />
 
-        {/* 2. Projects */}
+        {/* 3. Photography & Video Editing Portfolio */}
         <ProjectsSection />
 
-        {/* 3. About Me */}
+        {/* 4. About Me & Hanging Pendulum Portrait */}
         <AboutSection />
 
-        {/* 4. Services & Pricing */}
+        {/* 5. Creative Services */}
         <ServicesSection onSelectService={handleSelectService} />
 
-        {/* 5. Technical Skills & My Tech Stack */}
+        {/* 6. Creative Skills & Editing Tools */}
         <SkillsStackSection />
 
-        {/* 6. Contact */}
+        {/* 7. Contact & Instagram Booking */}
         <ContactSection
           selectedService={selectedService}
           onClearService={() => setSelectedService(null)}
         />
       </main>
 
-      {/* 7. Ending Animation & Footer */}
+      {/* 8. Cinematic Finale & Glass Bar Footer */}
       <EndingSection onBackToTop={handleBackToTop} />
 
-      {/* Floating Background Music Toggle */}
+      {/* Preserved Background Music Toggle */}
       <MusicToggle />
     </div>
   );

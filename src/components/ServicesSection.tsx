@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Aperture, ArrowRight, Camera, ChevronDown, Clapperboard, Film, Sparkles } from 'lucide-react';
-import { portfolioData, ServiceItem } from '../data/portfolioData';
+import { ArrowUpRight } from 'lucide-react';
+import { portfolioData } from '../data/portfolioData';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -10,59 +10,50 @@ interface ServicesSectionProps {
   onSelectService: (serviceTitle: string) => void;
 }
 
-const SERVICE_ICONS = [Camera, Aperture, Film, Clapperboard, Sparkles];
-
 export function ServicesSection({ onSelectService }: ServicesSectionProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const headingRef = useRef<HTMLDivElement | null>(null);
+  const listRef = useRef<HTMLUListElement | null>(null);
 
   useEffect(() => {
-    const prefersReduced = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    if (prefersReduced) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        '.services-header-reveal',
-        { opacity: 0, y: 24 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.7,
-          stagger: 0.08,
-          ease: 'power3.out',
+      gsap
+        .timeline({
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: 'top 82%',
+            start: 'top 80%',
             once: true,
           },
-        }
-      );
-
-      gsap.fromTo(
-        '.service-row-item',
-        { opacity: 0, y: 28 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.65,
-          stagger: 0.1,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: '.services-list',
-            start: 'top 84%',
-            once: true,
+        })
+        .fromTo(
+          headingRef.current,
+          { y: 20, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.55, ease: 'power3.out' }
+        )
+        .fromTo(
+          '.service-item',
+          { y: 24, opacity: 0, x: -10 },
+          {
+            y: 0,
+            opacity: 1,
+            x: 0,
+            duration: 0.45,
+            stagger: 0.07,
+            ease: 'back.out(1.3)',
           },
-        }
-      );
+          '-=0.25'
+        );
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
-  const handleToggle = (item: ServiceItem) => {
-    setExpandedId((prev) => (prev === item.id ? null : item.id));
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty('--my', `${e.clientY - rect.top}px`);
   };
 
   const { servicesSection } = portfolioData;
@@ -71,101 +62,78 @@ export function ServicesSection({ onSelectService }: ServicesSectionProps) {
     <section
       id="services"
       ref={sectionRef}
-      className="relative z-20 py-20 lg:py-28"
+      className="relative z-10 flex w-full flex-col items-center justify-center overflow-hidden border-t border-white/5 px-6 py-24 text-gray-100 md:px-16 lg:px-24"
     >
-      <div className="mx-auto max-w-6xl px-6 lg:px-10">
-        {/* Heading */}
-        <div className="mb-12 text-center">
-          <p className="services-header-reveal font-mono text-xs font-medium tracking-[0.26em] text-[#f43f5e] uppercase">
-            {servicesSection.kicker}
-          </p>
-          <h2 className="services-header-reveal mt-2 font-display text-4xl font-extrabold tracking-tight text-white uppercase sm:text-6xl">
-            {servicesSection.title.replace('.', '')}
-            <span className="text-[#f43f5e]">.</span>
-          </h2>
-        </div>
+      <div
+        ref={headingRef}
+        className="z-10 mb-12 flex flex-col items-center text-center"
+      >
+        <span className="mb-2 text-xs font-bold tracking-[0.2em] text-[#A31515] uppercase md:text-sm">
+          {servicesSection.kicker}
+        </span>
+        <h2 className="text-4xl font-black tracking-tight text-white uppercase md:text-6xl">
+          {servicesSection.title}
+        </h2>
+        <div className="mt-3 h-1.5 w-16 rounded-full bg-[#A31515]" />
+      </div>
 
-        {/* Stacked Service & Pricing Rows */}
-        <div className="services-list space-y-4">
-          {servicesSection.items.map((service, index) => {
-            const Icon = SERVICE_ICONS[index % SERVICE_ICONS.length];
-            const isExpanded = expandedId === service.id;
-
-            return (
-              <div
-                key={service.id}
-                className="service-row-item luminous-card overflow-hidden rounded-xl"
+      <div className="relative z-10 w-full max-w-4xl">
+        <div className="red-halo" aria-hidden="true" />
+        <ul
+          ref={listRef}
+          className="grid-blur relative m-0 grid list-none grid-cols-1 gap-3.5 p-0 md:flex md:flex-col md:gap-4"
+        >
+          {servicesSection.items.map((service, index) => (
+            <li key={service.id} className="service-item">
+              <button
+                type="button"
+                onPointerMove={handlePointerMove}
+                onClick={() => onSelectService(service.title)}
+                className="glass glass-grid-card group relative flex h-full w-full cursor-pointer flex-col items-start gap-3 rounded-3xl p-5 text-left outline-none focus-visible:outline-2 focus-visible:outline-[#D81E2F] md:flex-row md:items-center md:gap-6 md:p-5"
               >
-                <div className="flex flex-col justify-between gap-5 p-6 sm:flex-row sm:items-center sm:px-8 sm:py-6">
-                  {/* Left: Icon + Title + Desc */}
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(service)}
-                    aria-expanded={isExpanded}
-                    className="flex flex-1 cursor-pointer items-start gap-4 text-left focus-visible:outline-2 focus-visible:outline-[#ff2e63]"
-                  >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#ff3b62]/35 bg-[#e11d48]/15 text-[#fb7185]">
-                      <Icon className="h-5 w-5" />
+                <div className="card-spotlight" aria-hidden="true" />
+
+                <span className="glass-chip flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black text-gray-200 tabular-nums group-hover:text-white md:h-11 md:w-11 md:text-sm">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+
+                <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-6">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h3 className="text-base font-bold text-gray-100 transition-colors group-hover:text-[#ff334b] md:text-xl">
+                        {service.title}
+                      </h3>
+                      {service.featured && (
+                        <span className="glass-chip-red inline-block rounded-full px-2.5 py-0.5 text-[10px] font-black tracking-wider text-white uppercase">
+                          Specialty
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-400 md:text-sm">
+                      {service.description}
+                    </p>
+                  </div>
+
+                  <div className="shrink-0 md:text-right">
+                    <span className="mb-1 block text-[10px] font-semibold tracking-wider text-gray-500 uppercase">
+                      Book Via
                     </span>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-display text-lg font-bold tracking-tight text-white sm:text-xl">
-                          {service.title}
-                        </h3>
-                        <ChevronDown
-                          className={`h-4 w-4 text-white/45 transition-transform duration-200 ${
-                            isExpanded ? 'rotate-180 text-[#fb7185]' : ''
-                          }`}
-                        />
-                      </div>
-                      <p className="mt-1 text-xs leading-relaxed text-white/65 sm:text-sm">
-                        {service.description}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Right: Booking Channel & Inquiry CTA */}
-                  <div className="flex shrink-0 items-center justify-between gap-5 border-t border-white/10 pt-4 sm:justify-end sm:border-t-0 sm:pt-0">
-                    <div className="text-left sm:text-right">
-                      <span className="block font-mono text-[10px] tracking-[0.2em] text-white/45 uppercase">
-                        Book Via
-                      </span>
-                      <span className="font-display text-lg font-extrabold text-white sm:text-xl">
-                        {service.bookingLabel}
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => onSelectService(service.title)}
-                      className="crimson-cta inline-flex min-h-[42px] cursor-pointer items-center gap-2 rounded-md px-4 py-2 text-xs font-bold tracking-[0.14em] text-white uppercase whitespace-nowrap"
-                    >
-                      <span>Book</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </button>
+                    <span className="glass-chip inline-block rounded-full px-3.5 py-1 text-xs font-bold text-gray-100 group-hover:text-white md:text-sm">
+                      {service.bookingLabel}
+                    </span>
                   </div>
                 </div>
 
-                {/* Expandable Deliverables Drawer */}
-                {isExpanded && (
-                  <div className="border-t border-[#ff3b62]/15 bg-[#090205]/70 px-6 py-4 sm:px-8">
-                    <div className="flex flex-wrap items-center justify-between gap-4 text-xs">
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white/75">
-                        <span className="font-mono text-[11px] tracking-[0.18em] text-[#fb7185] uppercase">
-                          Included:
-                        </span>
-                        <span>{service.deliverables.join(' · ')}</span>
-                      </div>
-                      <span className="font-mono text-[11px] tracking-[0.15em] text-white/55 uppercase">
-                        {service.focusNote}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                <span
+                  aria-hidden="true"
+                  className="glass-chip absolute top-4 right-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-300 transition-all group-hover:border-[#D81E2F] group-hover:bg-[#D81E2F] group-hover:text-white md:static md:h-11 md:w-11"
+                >
+                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

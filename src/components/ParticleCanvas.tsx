@@ -20,11 +20,11 @@ interface ParticleCanvasProps {
 }
 
 const PARTICLE_COLORS = [
-  { r: 255, g: 46, b: 99 },   // Neon crimson-pink
-  { r: 225, g: 29, b: 72 },   // Deep crimson
-  { r: 251, g: 113, b: 133 }, // Soft rose
-  { r: 190, g: 18, b: 60 },   // Burgundy rose
-  { r: 244, g: 63, b: 94 },   // Luminous red-pink
+  { r: 216, g: 30, b: 47 },   // #D81E2F Accent red
+  { r: 163, g: 21, b: 21 },   // #A31515 Primary red
+  { r: 255, g: 120, b: 135 }, // #FF7887 Pink-red accent
+  { r: 139, g: 17, b: 24 },   // #8B1118 Glass reflection crimson
+  { r: 229, g: 9, b: 20 },    // Deep studio crimson
 ];
 
 export function ParticleCanvas({ scrollVelocityRef }: ParticleCanvasProps) {

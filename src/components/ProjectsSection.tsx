@@ -67,7 +67,7 @@ function GridVideoCardMedia({
       controls={false}
       disablePictureInPicture
       preload="metadata"
-      className="h-full w-full bg-[#060204] object-contain transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+      className="h-full w-full bg-[#07070a] object-contain transition-transform duration-500 ease-out group-hover:scale-[1.03]"
     />
   );
 }
@@ -82,9 +82,7 @@ function LightboxVideoPlayer({ src }: { src: string }) {
       el.defaultMuted = true;
       const playPromise = el.play();
       if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(() => {
-          // Ignore autoplay restriction if triggered off-gesture
-        });
+        playPromise.catch(() => {});
       }
     }
   }, []);
@@ -115,13 +113,15 @@ function LightboxVideoPlayer({ src }: { src: string }) {
       controls={false}
       disablePictureInPicture
       preload="auto"
-      className="max-h-[65vh] w-auto max-w-full rounded-sm object-contain"
+      className="max-h-[65vh] w-auto max-w-full rounded-xl object-contain"
     />
   );
 }
 
 export function ProjectsSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
+  const headingRef = useRef<HTMLDivElement | null>(null);
+  const stripTrackRef = useRef<HTMLDivElement | null>(null);
   const videoCardsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
   const visibleVideoIdsRef = useRef<Set<string>>(new Set());
   const touchStartXRef = useRef<number | null>(null);
@@ -135,8 +135,6 @@ export function ProjectsSection() {
 
   const { projectsSection } = portfolioData;
 
-  // Build balanced initial 4x2 overview when viewing "All" (up to 8 cards across categories),
-  // or full list when expanded or viewing a specific category.
   const orderedAllItems = useMemo(() => {
     if (projectsSection.items.length <= INITIAL_GRID_LIMIT) {
       return projectsSection.items;
@@ -166,6 +164,11 @@ export function ProjectsSection() {
     return roundRobin;
   }, [projectsSection.items]);
 
+  const photoItems = useMemo(
+    () => projectsSection.items.filter((item) => item.mediaType === 'image'),
+    [projectsSection.items]
+  );
+
   const filteredItems = useMemo(() => {
     if (activeCategory === 'all') {
       return orderedAllItems;
@@ -190,68 +193,83 @@ export function ProjectsSection() {
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setPrefersReducedMotion(mq.matches);
-
-    const onChange = (e: MediaQueryListEvent) => {
-      setPrefersReducedMotion(e.matches);
-    };
+    const onChange = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
+  // Scroll-triggered heading reveal, card clipping/stagger, and horizontal gallery drift
   useEffect(() => {
     if (prefersReducedMotion) return;
 
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        '.projects-header-reveal',
-        { opacity: 0, y: 24 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.7,
-          stagger: 0.08,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 82%',
-            once: true,
-          },
-        }
-      );
+      if (headingRef.current) {
+        gsap.fromTo(
+          headingRef.current.children,
+          { y: 26, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.7,
+            stagger: 0.08,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top 82%',
+              once: true,
+            },
+          }
+        );
+      }
+
+      if (stripTrackRef.current && window.innerWidth >= 768) {
+        gsap.fromTo(
+          stripTrackRef.current,
+          { x: 40 },
+          {
+            x: -140,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: stripTrackRef.current,
+              start: 'top 95%',
+              end: 'bottom 10%',
+              scrub: 1.2,
+            },
+          }
+        );
+      }
 
       gsap.utils.toArray<HTMLElement>('.project-card-item').forEach((card) => {
         gsap.fromTo(
           card,
-          { opacity: 0, y: 70, scale: 0.94, rotateX: 5 },
+          { opacity: 0, y: 40, scale: 0.96 },
           {
             opacity: 1,
             y: 0,
             scale: 1,
-            rotateX: 0,
-            ease: 'none',
+            duration: 0.65,
+            ease: 'power3.out',
             scrollTrigger: {
               trigger: card,
-              start: 'top 92%',
-              end: 'top 66%',
-              scrub: 1,
+              start: 'top 90%',
+              once: true,
             },
           }
         );
 
-        const media = card.querySelector<HTMLElement>('img, video');
-        if (media) {
+        const mediaStage = card.querySelector<HTMLElement>('.project-media-reveal');
+        if (mediaStage) {
           gsap.fromTo(
-            media,
-            { yPercent: -3, scale: 1.09 },
+            mediaStage,
+            { clipPath: 'inset(8% 0% 8% 0% round 14px)' },
             {
-              yPercent: 3,
-              scale: 1.06,
-              ease: 'none',
+              clipPath: 'inset(0% 0% 0% 0% round 14px)',
+              duration: 0.8,
+              ease: 'power3.out',
               scrollTrigger: {
                 trigger: card,
-                start: 'top 100%',
-                end: 'bottom 0%',
-                scrub: 1.2,
+                start: 'top 88%',
+                once: true,
               },
             }
           );
@@ -262,7 +280,6 @@ export function ProjectsSection() {
     return () => ctx.revert();
   }, [prefersReducedMotion, activeCategory, showAllInOverview, displayedItems.length]);
 
-  // Refresh GSAP ScrollTrigger positions when filter or expanded view changes section height
   useEffect(() => {
     const rafId = window.requestAnimationFrame(() => {
       ScrollTrigger.refresh();
@@ -270,6 +287,14 @@ export function ProjectsSection() {
     return () => window.cancelAnimationFrame(rafId);
   }, [activeCategory, showAllInOverview, displayedItems.length]);
 
+  // Pointer spotlight tracking for .card-spotlight
+  const handleCardPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty('--my', `${e.clientY - rect.top}px`);
+  };
+
+  // Video visibility observer — strictly 1 muted reel plays at a time
   const pickSingleVisibleVideo = useCallback(() => {
     if (prefersReducedMotion || activeIndex !== null) {
       setActiveGridVideoId(null);
@@ -291,10 +316,8 @@ export function ProjectsSection() {
     setActiveGridVideoId(null);
   }, [activeIndex, displayedItems, hoveredVideoId, prefersReducedMotion]);
 
-  // Observe visible video cards in viewport; allow strictly one video to play at a time
   useEffect(() => {
     visibleVideoIdsRef.current.clear();
-
     if (prefersReducedMotion || activeIndex !== null) {
       setActiveGridVideoId(null);
       return;
@@ -305,7 +328,7 @@ export function ProjectsSection() {
         for (const entry of entries) {
           const id = (entry.target as HTMLElement).dataset.videoId;
           if (!id) continue;
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.45) {
             visibleVideoIdsRef.current.add(id);
           } else {
             visibleVideoIdsRef.current.delete(id);
@@ -313,15 +336,13 @@ export function ProjectsSection() {
         }
         pickSingleVisibleVideo();
       },
-      { threshold: [0, 0.5, 0.8] }
+      { threshold: [0, 0.45, 0.8] }
     );
 
     for (const item of displayedItems) {
       if (item.mediaType === 'video') {
         const node = videoCardsRef.current.get(item.id);
-        if (node) {
-          observer.observe(node);
-        }
+        if (node) observer.observe(node);
       }
     }
 
@@ -337,11 +358,8 @@ export function ProjectsSection() {
 
   const registerVideoCardNode = useCallback(
     (id: string, node: HTMLButtonElement | null) => {
-      if (node) {
-        videoCardsRef.current.set(id, node);
-      } else {
-        videoCardsRef.current.delete(id);
-      }
+      if (node) videoCardsRef.current.set(id, node);
+      else videoCardsRef.current.delete(id);
     },
     []
   );
@@ -363,13 +381,9 @@ export function ProjectsSection() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (activeIndex === null) return;
-      if (e.key === 'Escape') {
-        setActiveIndex(null);
-      } else if (e.key === 'ArrowRight') {
-        handleNext();
-      } else if (e.key === 'ArrowLeft') {
-        handlePrev();
-      }
+      if (e.key === 'Escape') setActiveIndex(null);
+      else if (e.key === 'ArrowRight') handleNext();
+      else if (e.key === 'ArrowLeft') handlePrev();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -378,8 +392,18 @@ export function ProjectsSection() {
   const handleSelectCategory = (categoryId: PortfolioFilterId) => {
     setActiveCategory(categoryId);
     setActiveIndex(null);
-    if (categoryId !== 'all') {
-      setShowAllInOverview(false);
+    if (categoryId !== 'all') setShowAllInOverview(false);
+  };
+
+  const openLightboxForItem = (item: ProjectItem) => {
+    const idxInFiltered = filteredItems.findIndex((i) => i.id === item.id);
+    if (idxInFiltered >= 0) {
+      setActiveIndex(idxInFiltered);
+    } else {
+      setActiveCategory('all');
+      setShowAllInOverview(true);
+      const idxInAll = orderedAllItems.findIndex((i) => i.id === item.id);
+      setActiveIndex(idxInAll >= 0 ? idxInAll : 0);
     }
   };
 
@@ -391,30 +415,73 @@ export function ProjectsSection() {
     <section
       id="projects"
       ref={sectionRef}
-      className="relative z-20 py-20 lg:py-28"
+      className="relative z-10 w-full overflow-hidden border-t border-white/5 px-5 py-24 md:px-12 lg:px-20 lg:py-28"
     >
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
-        {/* Section Heading */}
-        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <div className="mx-auto max-w-7xl">
+        {/* Reference Section Heading */}
+        <div
+          ref={headingRef}
+          className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end"
+        >
           <div>
-            <p className="projects-header-reveal font-mono text-xs font-medium tracking-[0.26em] text-[#f43f5e] uppercase">
+            <span className="block text-sm font-bold tracking-[0.2em] text-[#A31515] uppercase md:text-base">
               {projectsSection.kicker}
-            </p>
-            <h2 className="projects-header-reveal mt-2 font-display text-4xl font-extrabold tracking-tight text-white uppercase sm:text-6xl">
-              {projectsSection.title.replace('.', '')}
-              <span className="text-[#f43f5e]">.</span>
+            </span>
+            <h2 className="mt-2 text-5xl font-black tracking-tight text-white uppercase sm:text-6xl md:text-7xl">
+              {projectsSection.title}
             </h2>
+            <div className="mt-3 h-1.5 w-20 rounded-full bg-[#A31515]" />
           </div>
-          <p className="projects-header-reveal max-w-md text-sm leading-relaxed text-white/60">
+          <p className="max-w-md text-sm leading-relaxed text-gray-400 md:text-base">
             {projectsSection.subtitle}
           </p>
         </div>
+
+        {/* Horizontal Scroll-Parallax Photography Filmstrip */}
+        {photoItems.length > 0 && activeCategory === 'all' && !showAllInOverview && (
+          <div className="mb-12 overflow-hidden rounded-3xl border border-white/8 bg-[#0b0a0e]/70 py-5">
+            <div className="mb-3 flex items-center justify-between px-5">
+              <span className="font-mono text-[11px] font-semibold tracking-[0.2em] text-[#FF7887] uppercase">
+                Photography Filmstrip
+              </span>
+              <span className="font-mono text-[11px] text-gray-500">
+                Click any frame to view full-screen
+              </span>
+            </div>
+            <div
+              ref={stripTrackRef}
+              className="flex gap-4 overflow-x-auto px-5 pb-2 md:overflow-visible md:pb-0"
+            >
+              {photoItems.slice(0, 8).map((photo) => (
+                <button
+                  key={`strip-${photo.id}`}
+                  type="button"
+                  onClick={() => openLightboxForItem(photo)}
+                  className="group relative aspect-[16/10] w-56 shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-[#101012] sm:w-64 md:w-72"
+                >
+                  <img
+                    src={photo.src}
+                    alt={`${photo.category} — ${photo.title}`}
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                  <span className="absolute bottom-2.5 left-3 font-mono text-[10px] tracking-[0.16em] text-gray-200 uppercase">
+                    {photo.category}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Category Filter Tabs */}
         <div
           role="tablist"
           aria-label="Portfolio categories"
-          className="projects-header-reveal mb-8 flex items-center gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible sm:pb-0"
+          className="mb-9 flex items-center gap-2.5 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible sm:pb-0"
         >
           {projectsSection.categories.map((cat) => {
             const isActive = activeCategory === cat.id;
@@ -425,16 +492,16 @@ export function ProjectsSection() {
                 type="button"
                 aria-selected={isActive}
                 onClick={() => handleSelectCategory(cat.id)}
-                className={`inline-flex min-h-[40px] shrink-0 cursor-pointer items-center gap-2 rounded-md border px-3.5 py-2 font-mono text-[11px] tracking-[0.14em] uppercase transition-all ${
+                className={`inline-flex min-h-[42px] shrink-0 cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-xs font-bold tracking-wider uppercase whitespace-nowrap transition-all ${
                   isActive
-                    ? 'border-[#f43f5e]/80 bg-[#e11d48]/20 text-white shadow-[0_0_20px_-6px_rgba(244,63,94,0.6)]'
-                    : 'border-white/12 bg-[#12050a]/75 text-white/65 hover:border-[#f43f5e]/45 hover:text-white'
+                    ? 'glass-chip-red text-white shadow-[0_8px_22px_-10px_rgba(255,18,56,0.6)]'
+                    : 'glass-chip text-gray-300 hover:text-white'
                 }`}
               >
                 <span>{cat.label}</span>
                 <span
-                  className={`text-[10px] tabular-nums ${
-                    isActive ? 'text-[#fda4af]' : 'text-white/40'
+                  className={`font-mono text-[11px] tabular-nums ${
+                    isActive ? 'text-white/90' : 'text-gray-500'
                   }`}
                 >
                   {cat.count}
@@ -444,10 +511,11 @@ export function ProjectsSection() {
           })}
         </div>
 
-        {/* Media Grid or Graceful Empty State */}
+        {/* Portfolio Grid */}
         {displayedItems.length > 0 ? (
-          <>
-            <div className="projects-grid grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="relative">
+            <div className="red-halo" aria-hidden="true" />
+            <div className="grid-blur relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
               {displayedItems.map((project, idx) => {
                 const isVideo = project.mediaType === 'video';
                 const shouldPlayVideo =
@@ -470,6 +538,7 @@ export function ProjectsSection() {
                     }
                     data-video-id={isVideo ? project.id : undefined}
                     type="button"
+                    onPointerMove={handleCardPointerMove}
                     onMouseEnter={
                       isVideo ? () => setHoveredVideoId(project.id) : undefined
                     }
@@ -481,10 +550,12 @@ export function ProjectsSection() {
                         lightboxTargetIndex >= 0 ? lightboxTargetIndex : idx
                       )
                     }
-                    className="project-card-item luminous-card group flex cursor-pointer flex-col overflow-hidden rounded-xl text-left focus-visible:outline-2 focus-visible:outline-[#ff2e63]"
+                    className="project-card-item glass glass-grid-card group relative flex cursor-pointer flex-col overflow-hidden rounded-3xl p-3 text-left focus-visible:outline-2 focus-visible:outline-[#D81E2F]"
                   >
-                    {/* Preview Frame — preserves original 16:10 proportions */}
-                    <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-[#ff3b62]/15 bg-[#0c0307]">
+                    <div className="card-spotlight" aria-hidden="true" />
+
+                    {/* Media Frame */}
+                    <div className="project-media-reveal relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-white/10 bg-[#07070a]">
                       {isVideo ? (
                         <GridVideoCardMedia
                           src={project.src}
@@ -501,129 +572,112 @@ export function ProjectsSection() {
                         />
                       )}
 
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0b0408] via-transparent to-transparent opacity-70" />
-                      <span className="absolute top-3 left-3 font-mono text-xs font-semibold tracking-widest text-white/75">
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-70" />
+
+                      <span className="absolute top-3 left-3 font-mono text-xs font-bold tracking-widest text-white/80 tabular-nums">
                         {String(idx + 1).padStart(2, '0')}
                       </span>
 
                       {isVideo && (
-                        <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded border border-[#ff3b62]/35 bg-black/70 px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-[#fda4af] uppercase">
+                        <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold tracking-[0.16em] text-[#FF7887] uppercase">
                           <Film className="h-3 w-3" />
-                          <span>Reel</span>
+                          <span>Silent Reel</span>
                         </span>
                       )}
 
-                      <span className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-black/50 text-white/70 transition-all duration-200 group-hover:border-[#f43f5e]/60 group-hover:bg-[#e11d48]/30 group-hover:text-white">
-                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      <span className="glass-chip absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full text-gray-200 transition-colors group-hover:border-[#D81E2F] group-hover:bg-[#D81E2F] group-hover:text-white">
+                        <ArrowUpRight className="h-4 w-4" />
                       </span>
                     </div>
 
-                    {/* Card Body — factual category & filename only */}
-                    <div className="flex flex-1 flex-col justify-between p-5">
+                    {/* Card Details — Clean Unboxed Typography */}
+                    <div className="relative z-10 flex flex-1 flex-col justify-between px-2 pt-4 pb-2">
                       <div>
-                        <p className="font-mono text-[11px] tracking-[0.16em] text-[#fb7185] uppercase">
+                        <p className="font-mono text-[11px] font-semibold tracking-[0.16em] text-[#FF7887] uppercase">
                           {project.category}
                         </p>
-                        <h3 className="mt-1.5 line-clamp-1 font-display text-base font-bold tracking-tight text-white transition-colors group-hover:text-[#fda4af] sm:text-lg">
+                        <h3 className="mt-1 line-clamp-1 text-base font-bold tracking-tight text-gray-100 transition-colors group-hover:text-white sm:text-lg">
                           {project.title}
                         </h3>
                       </div>
 
-                      <p className="mt-4 border-t border-white/8 pt-3 font-mono text-[11px] text-white/50 uppercase">
-                        {isVideo ? `Video · ${project.extension}` : `Photo · ${project.extension}`}
-                      </p>
+                      <div className="mt-4 flex items-center gap-2 border-t border-white/8 pt-3 font-mono text-[11px] text-gray-400 uppercase">
+                        <span>{project.discipline}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>{project.extension}</span>
+                      </div>
                     </div>
                   </button>
                 );
               })}
             </div>
 
-            {/* Expand/Collapse toggle when All has more than 8 items */}
+            {/* Expand/Collapse Toggle */}
             {activeCategory === 'all' &&
               filteredItems.length > INITIAL_GRID_LIMIT && (
-                <div className="mt-9 flex justify-center">
+                <div className="mt-10 flex justify-center">
                   <button
                     type="button"
                     onClick={() => setShowAllInOverview((prev) => !prev)}
-                    className="inline-flex min-h-[42px] cursor-pointer items-center gap-2 rounded-md border border-[#ff3b62]/35 bg-[#16060d]/85 px-6 py-2 font-mono text-xs font-semibold tracking-[0.16em] text-white uppercase transition-colors hover:border-[#f43f5e] hover:bg-[#e11d48]/20"
+                    className="glass-chip inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full px-7 py-2.5 text-xs font-bold tracking-wider text-gray-200 uppercase hover:text-white"
                   >
                     {showAllInOverview
                       ? 'Show Featured Grid (8)'
-                      : `View All ${filteredItems.length} Items`}
+                      : `View All ${filteredItems.length} Works`}
                   </button>
                 </div>
               )}
-          </>
+          </div>
         ) : (
-          <div className="projects-grid luminous-card mx-auto max-w-2xl rounded-2xl p-8 text-center sm:p-10">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-[#ff3b62]/35 bg-[#e11d48]/15 text-[#fb7185]">
+          <div className="glass mx-auto max-w-2xl rounded-3xl p-8 text-center sm:p-10">
+            <div className="glass-chip mx-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#FF7887]">
               <FolderOpen className="h-5 w-5" />
             </div>
-
-            {!projectsSection.folderExists ? (
-              <>
-                <h3 className="mt-4 font-display text-xl font-bold tracking-tight text-white uppercase">
-                  Local Media Folder Not Found
-                </h3>
-                <p className="mt-2 text-xs leading-relaxed text-white/65 sm:text-sm">
-                  Add your photography and reel files under{' '}
-                  <span className="font-mono text-[#fda4af]">public/preetham/</span>{' '}
-                  in the expected category subfolders to populate this gallery
-                  automatically.
-                </p>
-                <p className="mt-4 font-mono text-[11px] leading-relaxed text-white/45">
-                  PHOTOGRAPHY/nature · wildlife · birds · potraits · travel ·
-                  landscape &nbsp;|&nbsp; VIDEOGRAPHY/instagram-reels
-                </p>
-              </>
-            ) : (
-              <>
-                <h3 className="mt-4 font-display text-xl font-bold tracking-tight text-white uppercase">
-                  No Files in {activeCategoryLabel}
-                </h3>
-                <p className="mt-2 text-xs leading-relaxed text-white/65 sm:text-sm">
-                  No supported image or video files were found in this folder yet.
-                </p>
-                {activeCategory !== 'all' && projectsSection.items.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => handleSelectCategory('all')}
-                    className="crimson-cta mt-6 inline-flex min-h-[40px] cursor-pointer items-center rounded-md px-5 py-2 text-xs font-bold tracking-[0.14em] text-white uppercase"
-                  >
-                    Show All Media
-                  </button>
-                )}
-              </>
+            <h3 className="mt-4 text-xl font-bold tracking-tight text-white uppercase">
+              No Files in {activeCategoryLabel}
+            </h3>
+            <p className="mt-2 text-xs leading-relaxed text-gray-400 sm:text-sm">
+              {projectsSection.folderExists
+                ? 'No supported image or video files were found in this category.'
+                : 'Add photography and reel files under public/preetham/ to populate this gallery.'}
+            </p>
+            {activeCategory !== 'all' && projectsSection.items.length > 0 && (
+              <button
+                type="button"
+                onClick={() => handleSelectCategory('all')}
+                className="glass-red mt-6 inline-flex min-h-[42px] cursor-pointer items-center rounded-full px-6 py-2 text-xs font-bold tracking-wider text-white uppercase"
+              >
+                Show All Work
+              </button>
             )}
           </div>
         )}
       </div>
 
-      {/* Preserved & Enhanced Fullscreen Lightbox */}
+      {/* Fullscreen Media Lightbox (Silent Muted Video, Keyboard & Touch Swipe) */}
       {activeProject && (
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="project-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-md sm:p-5"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-md sm:p-6"
           onClick={() => setActiveIndex(null)}
         >
           <div
-            className="luminous-card relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[#ff2e63]/40 bg-[#0d0408]"
+            className="glass relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               aria-label="Close lightbox"
               onClick={() => setActiveIndex(null)}
-              className="absolute top-4 right-4 z-20 flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-white/15 bg-black/70 text-white/85 transition-colors hover:border-[#f43f5e] hover:text-white"
+              className="glass-chip absolute top-4 right-4 z-20 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-white"
             >
               <X className="h-4 w-4" />
             </button>
 
-            {/* Fullscreen Media Stage with Prev/Next & Swipe */}
             <div
-              className="relative flex min-h-[260px] flex-1 items-center justify-center overflow-hidden border-b border-[#ff3b62]/20 bg-[#060204] p-2 sm:p-4"
+              className="relative flex min-h-[260px] flex-1 items-center justify-center overflow-hidden border-b border-white/10 bg-[#07070a] p-3 sm:p-5"
               onTouchStart={(e) => {
                 touchStartXRef.current = e.touches[0]?.clientX ?? null;
               }}
@@ -645,7 +699,7 @@ export function ProjectsSection() {
                   src={activeProject.src}
                   alt={`${activeProject.category} — ${activeProject.title}`}
                   referrerPolicy="no-referrer"
-                  className="max-h-[65vh] w-auto max-w-full rounded-sm object-contain"
+                  className="max-h-[65vh] w-auto max-w-full rounded-xl object-contain"
                 />
               )}
 
@@ -655,7 +709,7 @@ export function ProjectsSection() {
                     type="button"
                     aria-label="Previous item"
                     onClick={handlePrev}
-                    className="absolute top-1/2 left-3 z-10 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-black/65 text-white/85 transition-colors hover:border-[#f43f5e] hover:bg-black/90 hover:text-white"
+                    className="glass-chip absolute top-1/2 left-3 z-10 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-white"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
@@ -663,7 +717,7 @@ export function ProjectsSection() {
                     type="button"
                     aria-label="Next item"
                     onClick={handleNext}
-                    className="absolute top-1/2 right-3 z-10 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-black/65 text-white/85 transition-colors hover:border-[#f43f5e] hover:bg-black/90 hover:text-white"
+                    className="glass-chip absolute top-1/2 right-3 z-10 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-white"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
@@ -671,19 +725,18 @@ export function ProjectsSection() {
               )}
             </div>
 
-            {/* Bottom Metadata & Actions */}
             <div className="p-5 sm:p-7">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-[#fb7185] uppercase">
+                <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-[#FF7887] uppercase">
                   <span>{String((activeIndex ?? 0) + 1).padStart(2, '0')}</span>
                   <span aria-hidden="true">·</span>
                   <span>{activeProject.category}</span>
                   <span aria-hidden="true">·</span>
-                  <span className="text-white/55">{activeProject.extension}</span>
+                  <span className="text-gray-400">{activeProject.extension}</span>
                 </div>
 
                 {filteredItems.length > 1 && (
-                  <span className="font-mono text-[11px] text-white/45 tabular-nums">
+                  <span className="font-mono text-xs text-gray-400 tabular-nums">
                     {(activeIndex ?? 0) + 1} / {filteredItems.length}
                   </span>
                 )}
@@ -691,7 +744,7 @@ export function ProjectsSection() {
 
               <h3
                 id="project-modal-title"
-                className="mt-2 font-display text-xl font-extrabold text-white sm:text-2xl"
+                className="mt-2 text-xl font-black text-white sm:text-2xl"
               >
                 {activeProject.title}
               </h3>
@@ -700,18 +753,18 @@ export function ProjectsSection() {
                 <a
                   href="#contact"
                   onClick={() => setActiveIndex(null)}
-                  className="crimson-cta inline-flex min-h-[42px] items-center gap-2 rounded-md px-5 py-2 text-xs font-bold tracking-wider text-white uppercase"
+                  className="glass-red inline-flex min-h-[42px] items-center gap-2 rounded-full px-6 py-2 text-xs font-bold tracking-wider text-white uppercase"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  <span>Book via Instagram DM</span>
+                  <span>Book Similar Shoot</span>
                 </a>
                 <a
                   href={activeProject.instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-white/20 bg-white/5 px-5 py-2 text-xs font-bold tracking-wider text-white/85 uppercase transition-colors hover:border-[#f43f5e] hover:text-white"
+                  className="glass-chip inline-flex min-h-[42px] items-center gap-2 rounded-full px-6 py-2 text-xs font-bold tracking-wider text-gray-200 uppercase hover:text-white"
                 >
-                  <Instagram className="h-3.5 w-3.5" />
+                  <Instagram className="h-3.5 w-3.5 text-[#FF7887]" />
                   <span>View on Instagram</span>
                 </a>
               </div>

@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 declare module 'virtual:preetham-media' {
   export type PreethamCategoryId =
     | 'nature'

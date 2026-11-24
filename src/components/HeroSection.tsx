@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import { ArrowDownRight, Mail } from 'lucide-react';
+import { ArrowDownRight, Instagram } from 'lucide-react';
 import { portfolioData } from '../data/portfolioData';
 import { CinematicBackground } from './CinematicBackground';
 import { InteractivePortrait } from './InteractivePortrait';
@@ -12,9 +12,20 @@ interface HeroSectionProps {
 
 export function HeroSection({ introDone, onNavigate }: HeroSectionProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const textGroupRef = useRef<HTMLDivElement | null>(null);
-  const portraitLayerRef = useRef<HTMLDivElement | null>(null);
+  const copyContainerRef = useRef<HTMLDivElement | null>(null);
+  const portraitStageRef = useRef<HTMLDivElement | null>(null);
   const [portraitReady, setPortraitReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     if (!introDone) return;
@@ -28,29 +39,30 @@ export function HeroSection({ introDone, onNavigate }: HeroSectionProps) {
     }
 
     const ctx = gsap.context(() => {
-      const items = textGroupRef.current?.querySelectorAll('.hero-reveal');
+      const items = copyContainerRef.current?.querySelectorAll(
+        '[data-hero-copy] > span, [data-hero-copy] > h1, [data-hero-copy] > div, [data-hero-copy] > p'
+      );
       if (items && items.length > 0) {
         gsap.fromTo(
           items,
-          { opacity: 0, y: 28 },
+          { opacity: 0, y: 26 },
           {
             opacity: 1,
             y: 0,
             duration: 0.75,
-            stagger: 0.09,
+            stagger: 0.08,
             ease: 'power3.out',
           }
         );
       }
 
       gsap.fromTo(
-        portraitLayerRef.current,
-        { opacity: 0, scale: 0.96, x: 24 },
+        portraitStageRef.current,
+        { opacity: 0, scale: 0.97 },
         {
           opacity: 1,
           scale: 1,
-          x: 0,
-          duration: 1.0,
+          duration: 0.9,
           ease: 'power3.out',
           onComplete: () => setPortraitReady(true),
         }
@@ -60,75 +72,140 @@ export function HeroSection({ introDone, onNavigate }: HeroSectionProps) {
     return () => ctx.revert();
   }, [introDone]);
 
+  // Subtle parallax movement on hero stage when scrolling
+  useEffect(() => {
+    const prefersReduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    if (prefersReduced) return;
+
+    const ctx = gsap.context(() => {
+      gsap.to(portraitStageRef.current, {
+        yPercent: 8,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: true,
+        },
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   const { hero } = portfolioData;
 
   return (
-    <section
-      id="hero"
-      ref={sectionRef}
-      className="relative z-20 flex flex-col justify-center overflow-hidden pt-20 pb-10 lg:min-h-screen lg:pt-24 lg:pb-12"
-    >
-      {/* Unified Dual-Layer Portrait Stage:
-          Layer 1 = Stationary CinematicBackground
-          Layer 2 = InteractivePortrait (transparent cutout with cursor shatter physics) */}
-      <div className="relative h-[340px] w-full overflow-hidden sm:h-[420px] lg:absolute lg:inset-0 lg:h-full">
-        <CinematicBackground backgroundImage={hero.backgroundImage} />
-
-        <div ref={portraitLayerRef} className="absolute inset-0 z-10">
+    <div id="hero" className="flex w-full flex-col overflow-hidden">
+      <section
+        ref={sectionRef}
+        className="relative h-[100svh] min-h-[640px] w-full overflow-hidden"
+        style={{ touchAction: 'pan-y' }}
+      >
+        {/* Reference Framed Rounded Stage (28px radius, hairline border, shadow-glass) */}
+        <div
+          ref={portraitStageRef}
+          className="shadow-glass absolute overflow-hidden rounded-[28px] border border-white/10"
+          style={
+            isMobile
+              ? {
+                  left: 'clamp(16px, 5%, 22px)',
+                  right: 'clamp(16px, 5%, 22px)',
+                  top: 'max(8.5%, 84px)',
+                  height: '49%',
+                }
+              : {
+                  left: '5.5%',
+                  right: '5.5%',
+                  top: 'max(8.5%, 96px)',
+                  bottom: '8.5%',
+                }
+          }
+        >
+          <CinematicBackground backgroundImage={hero.backgroundImage} />
           <InteractivePortrait
             cutoutImage={hero.portraitImage}
             alt={hero.portraitAlt}
             entranceReady={portraitReady}
           />
         </div>
-      </div>
 
-      {/* Left Negative-Space Hero Typography & CTAs (always crisp and clickable above Layer 1/2) */}
-      <div className="pointer-events-none relative z-20 mx-auto w-full max-w-7xl px-6 pt-8 lg:px-10 lg:pt-0">
+        {/* Left Negative-Space Hero Typography & CTAs matching reference [data-hero-copy] */}
         <div
-          ref={textGroupRef}
-          className="pointer-events-auto max-w-xl lg:max-w-2xl"
+          ref={copyContainerRef}
+          className="pointer-events-none absolute flex items-center will-change-transform max-md:items-end [&_a]:pointer-events-auto [&_button]:pointer-events-auto"
+          style={
+            isMobile
+              ? {
+                  left: '4%',
+                  right: '4%',
+                  top: 'calc(max(8.5%, 84px) + 49% + 12px)',
+                  bottom: '3%',
+                }
+              : {
+                  left: '5.5%',
+                  right: '5.5%',
+                  top: 'max(8.5%, 96px)',
+                  bottom: '8.5%',
+                }
+          }
         >
-          <div className="hero-reveal mb-5 flex items-center gap-3">
-            <span className="h-[2px] w-8 bg-[#f43f5e] shadow-[0_0_12px_#f43f5e]" />
-            <p className="font-mono text-xs font-medium tracking-[0.26em] text-[#fb7185] uppercase">
-              {hero.kicker}
-            </p>
-          </div>
+          <div className="max-w-[min(46rem,92%)] pr-6 pl-[6%] max-md:w-full max-md:max-w-full max-md:rounded-3xl max-md:bg-gradient-to-t max-md:from-[#07070a]/95 max-md:via-[#07070a]/65 max-md:to-transparent max-md:pt-4 max-md:pr-3 max-md:pb-1 max-md:pl-3">
+            <div data-hero-copy className="flex flex-col gap-2 sm:gap-3.5">
+              <span className="text-[11px] font-bold tracking-[0.25em] text-[#ff2a3b] uppercase sm:text-xs md:text-sm">
+                {hero.kicker}
+              </span>
 
-          <h1 className="hero-reveal font-display text-5xl leading-[0.95] font-extrabold tracking-tight text-white uppercase sm:text-7xl xl:text-[5.5rem]">
-            {hero.name}
-          </h1>
+              <h1 className="text-4xl leading-[0.88] font-black tracking-tight text-white uppercase drop-shadow-md sm:text-6xl md:text-7xl lg:text-8xl">
+                {hero.name}
+              </h1>
 
-          <p className="hero-reveal mt-4 font-display text-sm font-bold tracking-[0.22em] text-[#f43f5e] uppercase sm:text-base">
-            {hero.role}
-          </p>
+              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-sm font-extrabold tracking-wider text-white uppercase sm:gap-3 sm:text-base md:text-lg lg:text-xl">
+                <span>{hero.roleLeft}</span>
+                <span className="font-bold text-[#ff2a3b]">/</span>
+                <span>{hero.roleRight}</span>
+              </div>
 
-          <p className="hero-reveal mt-5 max-w-lg text-base leading-relaxed text-white/80 sm:text-lg">
-            {hero.intro}
-          </p>
+              <p className="mt-1 max-w-lg text-xs font-normal tracking-wide text-gray-300 sm:text-sm md:text-base lg:text-lg">
+                {hero.intro}
+              </p>
 
-          <div className="hero-reveal mt-9 flex flex-wrap items-center gap-4">
-            <button
-              type="button"
-              onClick={() => onNavigate('projects')}
-              className="crimson-cta inline-flex min-h-[48px] cursor-pointer items-center gap-2.5 rounded-md px-7 py-3 text-xs font-bold tracking-[0.18em] text-white uppercase whitespace-nowrap"
-            >
-              <span>{hero.primaryCta}</span>
-              <ArrowDownRight className="h-4 w-4" />
-            </button>
+              <div className="mt-3 flex flex-wrap items-center gap-3 sm:mt-4 sm:gap-4">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('projects')}
+                  className="glass-red inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full px-6 py-2.5 text-xs font-bold tracking-wider text-white uppercase whitespace-nowrap sm:px-7 sm:py-3"
+                >
+                  <span>{hero.primaryCta}</span>
+                  <ArrowDownRight className="h-4 w-4" />
+                </button>
 
-            <button
-              type="button"
-              onClick={() => onNavigate('contact')}
-              className="inline-flex min-h-[48px] cursor-pointer items-center gap-2.5 rounded-md border border-[#ff3b62]/40 bg-[#16060c]/75 px-7 py-3 text-xs font-bold tracking-[0.18em] text-white/90 uppercase whitespace-nowrap backdrop-blur-md transition-all duration-200 hover:border-[#ff3b62] hover:bg-[#2a0a16]/85 hover:text-white"
-            >
-              <Mail className="h-4 w-4 text-[#fb7185]" />
-              <span>{hero.secondaryCta}</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('contact')}
+                  className="glass-chip inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full px-6 py-2.5 text-xs font-bold tracking-wider text-gray-200 uppercase whitespace-nowrap hover:text-white sm:px-7 sm:py-3"
+                >
+                  <Instagram className="h-4 w-4 text-[#FF7887]" />
+                  <span>{hero.secondaryCta}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+
+        {/* Minimal Scroll Indicator */}
+        <button
+          type="button"
+          onClick={() => onNavigate('stats')}
+          aria-label="Scroll to highlights"
+          className="absolute bottom-3 left-1/2 hidden -translate-x-1/2 cursor-pointer flex-col items-center gap-1.5 text-[10px] font-bold tracking-[0.26em] text-gray-400 uppercase transition-colors hover:text-white md:flex"
+        >
+          <span>Scroll</span>
+          <span className="h-4 w-[1px] bg-gradient-to-b from-[#D81E2F] to-transparent" />
+        </button>
+      </section>
+    </div>
   );
 }
