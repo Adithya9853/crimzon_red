@@ -862,12 +862,8 @@ html .ig-direct-card:focus-visible .ig-direct-cta {
   background: rgba(255, 48, 78, 0.25);
 }
 
-@media (pointer: fine) {
-  html.has-cinematic-cursor,
-  html.has-cinematic-cursor body,
-  html.has-cinematic-cursor button,
-  html.has-cinematic-cursor a { cursor: none !important; }
-}
+.cinematic-cursor-ring,
+.cinematic-cursor-dot { display: none; }
 @media (pointer: coarse) {
   .cinematic-cursor-trail, .cinematic-cursor-ring, .cinematic-cursor-dot { display: none; }
 }
